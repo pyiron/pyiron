@@ -27,14 +27,14 @@ class AtomisticParallelMaster(ParallelMaster, AtomisticGenericJob):
 
     @property
     def structure(self):
-        if self.ref_job:
+        if self.ref_job is not None:
             return self._ref_job.structure
         else:
             return None
 
     @structure.setter
     def structure(self, basis):
-        if self.ref_job:
+        if self.ref_job is not None:
             self._ref_job.structure = basis
         else:
             raise ValueError(
@@ -144,10 +144,10 @@ class MapJobGenerator(JobGenerator):
         Returns:
             (list)
         """
-        return self._job.parameter_list
+        return self._master.parameter_list
 
     def modify_job(self, job, parameter):
-        return self._job._map_function(job, parameter)
+        return self._master._map_function(job, parameter)
 
 
 def pipe(project, job, step_lst, delete_existing_job=False):

@@ -2,22 +2,30 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import os,subprocess,re,pandas
+import os
+import subprocess
+import re
+import pandas
 import numpy as np
 import matplotlib.pyplot as pt
 
 from pyiron.dft.job.generic import GenericDFTJob
 from pyiron_base import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
+from pyiron_base.generic.util import ImportAlarm
 
 try:
     from molmod.io.fchk import FCHKFile
-    from molmod.units import amu,angstrom,electronvolt,centimeter,kcalmol
+    from molmod.units import amu, angstrom, electronvolt, centimeter, kcalmol
     from molmod.constants import lightspeed
     from molmod.periodic import periodic
     import tamkin
+    import_alarm = ImportAlarm()
 except ImportError:
-    pass
+    import_alarm = ImportAlarm(
+        "Gaussian relies on the molmod and tamkin packages, but these are unavailable. Please ensure your python "
+        "environment contains these."
+    )
 
 
 __author__ = "Jan Janssen, Sander Borgmans"
@@ -31,12 +39,12 @@ __date__ = "Aug 27, 2019"
 
 
 class Gaussian(GenericDFTJob):
+    @import_alarm
     def __init__(self, project, job_name):
         super(Gaussian, self).__init__(project, job_name)
         self.__name__ = "Gaussian"
         self._executable_activate(enforce=True)
         self.input = GaussianInput()
-
 
     def write_input(self):
         input_dict = {'mem': self.server.memory_limit,
@@ -55,13 +63,11 @@ class Gaussian(GenericDFTJob):
                       }
         write_input(input_dict=input_dict, working_directory=self.working_directory)
 
-
     def collect_output(self):
         output_dict = collect_output(output_file=os.path.join(self.working_directory, 'input.fchk'))
         with self.project_hdf5.open("output") as hdf5_output:
             for k, v in output_dict.items():
                 hdf5_output[k] = v
-
 
     def to_hdf(self, hdf=None, group_name=None):
         super(Gaussian, self).to_hdf(hdf=hdf, group_name=group_name)
@@ -69,21 +75,18 @@ class Gaussian(GenericDFTJob):
             self.structure.to_hdf(hdf5_input)
             self.input.to_hdf(hdf5_input)
 
-
     def from_hdf(self, hdf=None, group_name=None):
         super(Gaussian, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
 
-
     def log(self):
         with open(os.path.join(self.working_directory, 'input.log')) as f:
             print(f.read())
 
-
     def calc_minimize(self, electronic_steps=None, ionic_steps=None, algorithm=None, ionic_forces=None):
-        '''
+        """
             Function to setup the hamiltonian to perform ionic relaxations using DFT. The convergence goal can be set using
             either the iconic_energy as an limit for fluctuations in energy or the iconic_forces.
 
@@ -93,7 +96,7 @@ class Gaussian(GenericDFTJob):
                 electronic_steps (int): maximum number of electronic steps per electronic convergence
                 ionic_steps (int): maximum number of ionic steps
                 ionic_forces ('tight' or 'verytight'): convergence criterium for Berny opt (optional)
-        '''
+        """
         settings = {}
         opt_settings = []
 
@@ -127,16 +130,15 @@ class Gaussian(GenericDFTJob):
             ionic_force_tolerance=ionic_forces
         )
 
-
     def calc_static(self, electronic_steps=None, algorithm=None):
-        '''
+        """
             Function to setup the hamiltonian to perform static SCF DFT runs
 
             **Arguments**
 
                 algorithm (str): SCF algorithm
                 electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
-        '''
+        """
         settings = {}
         if electronic_steps is not None:
             if not 'SCF' in settings:
@@ -159,15 +161,13 @@ class Gaussian(GenericDFTJob):
             algorithm=algorithm
         )
 
-
     def calc_md(self, temperature=None,  n_ionic_steps=1000, time_step=None, n_print=100):
         raise NotImplementedError("calc_md() not implemented in Gaussian.")
 
-
     def print_MO(self):
-        '''
+        """
             Print a list of the MO's with the corresponding orbital energy and occupation.
-        '''
+        """
 
         n_MO = self.get('output/structure/dft/scf_density').shape[0]
         for n,index in enumerate(range(n_MO)):
@@ -182,9 +182,8 @@ class Gaussian(GenericDFTJob):
                 orbital_energy = [self.get('output/structure/dft/alpha_orbital_e')[index],self.get('output/structure/dft/beta_orbital_e')[index]]
                 print("#{}: \t Orbital energies (alpha,beta) = {:>10.5f},{:>10.5f} \t Occ. = {},{}".format(n,orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
 
-
-    def visualize_MO(self,index,particle_size=0.5,show_bonds=True):
-        '''
+    def visualize_MO(self, index, particle_size=0.5, show_bonds=True):
+        """
             Visualize the MO identified by its index.
 
             **Arguments**
@@ -204,7 +203,7 @@ class Gaussian(GenericDFTJob):
             view[2].update_surface(isolevel=-1, color='red', opacity=.3)
 
             This makes sure that the bonding and non-bonding MO's are plotted and makes them transparent
-        '''
+        """
         n_MO = self.get('output/structure/dft/scf_density').shape[0]
         assert index >= 0 and index < n_MO
         assert len(self.get('output/structure/numbers')) < 50 # check whether structure does not become too large for interactive calculation of cube file
@@ -259,14 +258,13 @@ class Gaussian(GenericDFTJob):
         view.add_component('{}.cube'.format(path))
         return view
 
-
     def read_NMA(self):
-        '''
+        """
             Reads the NMA output from the Gaussian .log file.
 
             Returns:
                     IR frequencies, intensities and corresponding eigenvectors (modes).
-        '''
+        """
         # Read number of atoms
         nrat = len(self.get('output/structure/numbers'))
 
@@ -306,14 +304,13 @@ class Gaussian(GenericDFTJob):
 
         return freqs,ints,modes
 
-
     def bsse_to_pandas(self):
-        '''
+        """
         Convert bsse output of all frames to a pandas Dataframe object.
 
         Returns:
             pandas.Dataframe: output as dataframe
-        '''
+        """
         assert 'counterpoise' in [k.lower() for k in self.input['settings'].keys()] # check if there was a bsse calculation
         tmp = {}
         with self.project_hdf5.open('output/structure/bsse') as hdf:
@@ -328,9 +325,9 @@ class GaussianInput(GenericParameters):
         super(GaussianInput, self).__init__(input_file_name=input_file_name, table_name="input_inp", comment_char="#")
 
     def load_default(self):
-        '''
+        """
         Loading the default settings for the input file.
-        '''
+        """
         input_str = """\
 lot HF
 basis_set 6-311G(d,p)
@@ -345,7 +342,7 @@ def write_input(input_dict,working_directory='.'):
     # Load dictionary
     lot          = input_dict['lot']
     basis_set    = input_dict['basis_set']
-    spin_mult    = input_dict['spin_mult'] # 2S+1
+    spin_mult    = input_dict['spin_mult']  # 2S+1
     charge       = input_dict['charge']
     symbols      = input_dict['symbols']
     pos          = input_dict['pos']
@@ -377,7 +374,7 @@ def write_input(input_dict,working_directory='.'):
     else:
         settings = {}
 
-    verbosity_dict={'low':'t','normal':'n','high':'p'}
+    verbosity_dict = {'low': 't', 'normal': 'n', 'high': 'p'}
     if not input_dict['verbosity'] is None:
         verbosity  = input_dict['verbosity']
         if verbosity in verbosity_dict:
@@ -386,7 +383,7 @@ def write_input(input_dict,working_directory='.'):
         verbosity='n'
 
     if 'Counterpoise' in settings.keys():
-        if input_dict['bsse_idx'] is None or not len(input_dict['bsse_idx'])==len(pos) : # check if all elements are present for a BSSE calculation
+        if input_dict['bsse_idx'] is None or not len(input_dict['bsse_idx']) == len(pos) : # check if all elements are present for a BSSE calculation
             raise ValueError('The Counterpoise setting requires a valid bsse_idx array')
         # Check bsse idx (should start from 1 for Gaussian)
         input_dict['bsse_idx'] = [k - min(input_dict['bsse_idx']) + 1 for k in input_dict['bsse_idx']]
@@ -398,7 +395,7 @@ def write_input(input_dict,working_directory='.'):
     for key,valuelst in settings.items():
         if not isinstance(valuelst, list):
             valuelst = [valuelst]
-        option = key + "({}) ".format(",".join(valuelst))*(len(valuelst)>0)
+        option = key + "({}) ".format(",".join(valuelst))*(len(valuelst) > 0)
         settings_string += option
 
     # Write to file
@@ -411,7 +408,7 @@ def write_input(input_dict,working_directory='.'):
 
         if not 'Counterpoise' in settings.keys():
             f.write("{} {}\n".format(charge,spin_mult))
-            for n,p in enumerate(pos):
+            for n, p in enumerate(pos):
                 f.write(" {}\t{: 1.6f}\t{: 1.6f}\t{: 1.6f}\n".format(symbols[n],p[0],p[1],p[2]))
             f.write('\n\n') # don't know whether this is still necessary in G16
         else:
@@ -420,7 +417,7 @@ def write_input(input_dict,working_directory='.'):
             else:
                 f.write("{} {}\n".format(charge,spin_mult))
 
-            for n,p in enumerate(pos):
+            for n, p in enumerate(pos):
                 f.write(" {}(Fragment={})\t{: 1.6f}\t{: 1.6f}\t{: 1.6f}\n".format(symbols[n],input_dict['bsse_idx'][n],p[0],p[1],p[2]))
             f.write('\n\n') # don't know whether this is still necessary in G16
 
@@ -607,7 +604,8 @@ def collect_output(output_file):
 
 # function from theochem iodata
 def _triangle_to_dense(triangle):
-    '''Convert a symmetric matrix in triangular storage to a dense square matrix.
+    """
+    Convert a symmetric matrix in triangular storage to a dense square matrix.
     Parameters
     ----------
     triangle
@@ -618,7 +616,7 @@ def _triangle_to_dense(triangle):
     -------
     ndarray
         a square symmetric matrix.
-    '''
+    """
     if triangle is None: return None
     nrow = int(np.round((np.sqrt(1 + 8 * len(triangle)) - 1) / 2))
     result = np.zeros((nrow, nrow))
@@ -632,8 +630,11 @@ def _triangle_to_dense(triangle):
 
 
 def _reverse_readline(filename, buf_size=8192):
-    '''A generator that returns the lines of a file in reverse order'''
-    '''https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python'''
+    """
+    A generator that returns the lines of a file in reverse order
+
+    https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python
+    """
     with open(filename) as fh:
         segment = None
         offset = 0

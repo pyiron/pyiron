@@ -9,7 +9,7 @@ import numpy as np
 import warnings
 
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron_base import GenericParameters, GenericMaster, GenericJob as GenericJobCore
+from pyiron_base import GenericParameters, GenericMaster, GenericJob as GenericJobCore, deprecate
 
 try:
     from pyiron_base import ProjectGUI
@@ -606,22 +606,21 @@ class AtomisticGenericJob(GenericJobCore):
         )
 
     # Compatibility functions
+    @deprecate("Use get_structure()")
     def get_final_structure(self):
         """
+        Get the final structure calculated from the job.
 
         Returns:
-
+            :class:`.Atoms`
         """
-        warnings.warn(
-            "get_final_structure() is deprecated - please use get_structure() instead.",
-            DeprecationWarning,
-        )
         return self.get_structure(iteration_step=-1)
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
         there is only one ionic iteration step
+
         Args:
             iteration_step (int): Step for which the structure is requested
             wrap_atoms (bool): True if the atoms are to be wrapped back into the unit cell
@@ -629,34 +628,27 @@ class AtomisticGenericJob(GenericJobCore):
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required structure
         """
-        if not (self.structure is not None):
-            raise AssertionError()
+        if self.structure is None:
+            raise AssertionError('Structure not set')
         snapshot = self.structure.copy()
-        conditions = list()
-        if isinstance(self.output.cells, (list, np.ndarray)):
-            if len(self.output.cells) == 0:
-                conditions.append(True)
-            else:
-                conditions.append(self.output.cells[0] is None)
-        if self.output.positions is not None and self.output.cells is None:
-            conditions.append(self.output.cells is None)
-        if any(conditions):
-            snapshot.cell = None
-        elif self.output.cells is not None:
+        try:
             snapshot.cell = self.output.cells[iteration_step]
-        if self.output.positions is not None:
-            snapshot.positions = self.output.positions[iteration_step]
-        indices = self.output.indices
-        if indices is not None and len(indices) > max([iteration_step, 0]):
-            snapshot.indices = indices[iteration_step]
+        except IndexError:
+            if wrap_atoms:
+                raise IndexError('cell at step ', iteration_step, ' not found')
+            snapshot.cell = None
+        try:
+            snapshot.indices = self.output.indices[iteration_step]
+        except IndexError:
+            pass
         if wrap_atoms:
-            return snapshot.center_coordinates_in_unit_cell()
+            snapshot.positions = self.output.positions[iteration_step]
+            snapshot.center_coordinates_in_unit_cell()
+        elif len(self.output.unwrapped_positions) > max([iteration_step, 0]):
+            snapshot.positions = self.output.unwrapped_positions[iteration_step]
         else:
-            if len(self.output.unwrapped_positions) > max([iteration_step, 0]):
-                snapshot.positions = self.output.unwrapped_positions[iteration_step]
-            else:
-                snapshot.positions += self.output.total_displacements[iteration_step]
-            return snapshot
+            snapshot.positions += self.output.total_displacements[iteration_step]
+        return snapshot
 
     def map(self, function, parameter_lst):
         master = self.create_job(

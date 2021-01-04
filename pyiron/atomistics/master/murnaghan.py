@@ -302,11 +302,11 @@ class MurnaghanJobGenerator(JobGenerator):
         """
         parameter_lst = []
         for strain in np.linspace(
-            1 - self._job.input["vol_range"],
-            1 + self._job.input["vol_range"],
-            int(self._job.input["num_points"]),
+            1 - self._master.input["vol_range"],
+            1 + self._master.input["vol_range"],
+            int(self._master.input["num_points"]),
         ):
-            basis = self._job.ref_job.structure.copy()
+            basis = self._master.ref_job.structure.copy()
             basis.set_cell(basis.cell * strain ** (1.0 / 3.0), scale_atoms=True)
             parameter_lst.append([np.round(strain, 7), basis])
         return parameter_lst

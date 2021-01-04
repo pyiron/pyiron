@@ -405,9 +405,11 @@ class LammpsBase(AtomisticGenericJob):
         else:
             self.collect_dump_file(file_name="dump.out", cwd=self.working_directory)
         self.collect_output_log(file_name="log.lammps", cwd=self.working_directory)
-        final_structure = self.get_structure(iteration_step=-1)
-        with self.project_hdf5.open("output") as hdf_output:
-            final_structure.to_hdf(hdf_output)
+        if len(self.output.cells) > 0:
+            final_structure = self.get_structure(iteration_step=-1)
+            if final_structure is not None:
+                with self.project_hdf5.open("output") as hdf_output:
+                    final_structure.to_hdf(hdf_output)
 
     def convergence_check(self):
         if self._generic_input["calc_mode"] == "minimize":
@@ -533,70 +535,79 @@ class LammpsBase(AtomisticGenericJob):
         """
         self.collect_errors(file_name=file_name, cwd=cwd)
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
-        with open(file_name, "r") as f:
-            f = f.readlines()
-            l_start = np.where([line.startswith("Step") for line in f])[0]
-            l_end = np.where([line.startswith("Loop") for line in f])[0]
-            if len(l_start) > len(l_end):
-                l_end = np.append(l_end, [None])
-            df = [
-                pd.read_csv(
-                    StringIO("\n".join(f[llst:llen])), delim_whitespace=True
-                )
-                for llst, llen in zip(l_start, l_end)
-            ]
-        df = df[-1]
-
-        h5_dict = {
-            "Step": "steps",
-            "Temp": "temperature",
-            "PotEng": "energy_pot",
-            "TotEng": "energy_tot",
-            "Volume": "volume",
-        }
-
-        for key in df.columns[df.columns.str.startswith('f_mean')]:
-            h5_dict[key] = key.replace('f_', '')
-
-        df = df.rename(index=str, columns=h5_dict)
-        pressures = np.stack(
-            (df.Pxx, df.Pxy, df.Pxz, df.Pxy, df.Pyy, df.Pyz, df.Pxz, df.Pyz, df.Pzz),
-            axis=-1,
-        ).reshape(-1, 3, 3).astype('float64')
-        pressures *= 0.0001  # bar -> GPa
-
-        # Rotate pressures from Lammps frame to pyiron frame if necessary
-        rotation_matrix = self._prism.R.T
-        if np.matrix.trace(rotation_matrix) != 3:
-            pressures = rotation_matrix.T @ pressures @ rotation_matrix
-
-        df = df.drop(
-            columns=df.columns[
-                ((df.columns.str.len() == 3) & df.columns.str.startswith("P"))
-            ]
-        )
-        df["pressures"] = pressures.tolist()
-        if 'mean_pressure[1]' in df.columns:
-            pressures = np.stack(
-                (df['mean_pressure[1]'], df['mean_pressure[4]'], df['mean_pressure[5]'],
-                 df['mean_pressure[4]'], df['mean_pressure[2]'], df['mean_pressure[6]'],
-                 df['mean_pressure[5]'], df['mean_pressure[6]'], df['mean_pressure[3]']),
-                axis=-1,
-            ).reshape(-1, 3, 3).astype('float64')
-            pressures *= 0.0001  # bar -> GPa
-            if np.matrix.trace(rotation_matrix) != 3:
-                pressures = rotation_matrix.T @ pressures @ rotation_matrix
-            df = df.drop(
-                columns=df.columns[
-                    (df.columns.str.startswith("mean_pressure") & df.columns.str.endswith(']'))
+        if os.path.exists(file_name):
+            with open(file_name, "r") as f:
+                f = f.readlines()
+                l_start = np.where([line.startswith("Step") for line in f])[0]
+                l_end = np.where([line.startswith("Loop") for line in f])[0]
+                if len(l_start) > len(l_end):
+                    l_end = np.append(l_end, [None])
+                df = [
+                    pd.read_csv(
+                        StringIO("\n".join(f[llst:llen])), delim_whitespace=True
+                    )
+                    for llst, llen in zip(l_start, l_end)
                 ]
-            )
-            df["mean_pressures"] = pressures.tolist()
+            if len(df) == 1:
+                df = df[-1]
+            else:
+                df = pd.concat(df)
 
-        with self.project_hdf5.open("output/generic") as hdf_output:
-            # This is a hack for backward comparability
-            for k, v in df.items():
-                hdf_output[k] = np.array(v)
+            h5_dict = {
+                "Step": "steps",
+                "Temp": "temperature",
+                "PotEng": "energy_pot",
+                "TotEng": "energy_tot",
+                "Volume": "volume",
+            }
+
+            for key in df.columns[df.columns.str.startswith('f_mean')]:
+                h5_dict[key] = key.replace('f_', '')
+
+            df = df.rename(index=str, columns=h5_dict)
+            if all([x in df.columns.values for x in ["Pxx", "Pxy", "Pxz", "Pxy", "Pyy", "Pyz", "Pxz", "Pyz", "Pzz"]]):
+                pressures = np.stack(
+                    (df.Pxx, df.Pxy, df.Pxz, df.Pxy, df.Pyy, df.Pyz, df.Pxz, df.Pyz, df.Pzz),
+                    axis=-1,
+                ).reshape(-1, 3, 3).astype('float64')
+                pressures *= 0.0001  # bar -> GPa
+
+                # Rotate pressures from Lammps frame to pyiron frame if necessary
+                rotation_matrix = self._prism.R.T
+                if np.matrix.trace(rotation_matrix) != 3:
+                    pressures = rotation_matrix.T @ pressures @ rotation_matrix
+
+                df = df.drop(
+                    columns=df.columns[
+                        ((df.columns.str.len() == 3) & df.columns.str.startswith("P"))
+                    ]
+                )
+                df["pressures"] = pressures.tolist()
+            else:
+                warnings.warn("LAMMPS warning: log.lammps does not contain the required pressure values.")
+            if 'mean_pressure[1]' in df.columns:
+                pressures = np.stack(
+                    (df['mean_pressure[1]'], df['mean_pressure[4]'], df['mean_pressure[5]'],
+                     df['mean_pressure[4]'], df['mean_pressure[2]'], df['mean_pressure[6]'],
+                     df['mean_pressure[5]'], df['mean_pressure[6]'], df['mean_pressure[3]']),
+                    axis=-1,
+                ).reshape(-1, 3, 3).astype('float64')
+                pressures *= 0.0001  # bar -> GPa
+                if np.matrix.trace(rotation_matrix) != 3:
+                    pressures = rotation_matrix.T @ pressures @ rotation_matrix
+                df = df.drop(
+                    columns=df.columns[
+                        (df.columns.str.startswith("mean_pressure") & df.columns.str.endswith(']'))
+                    ]
+                )
+                df["mean_pressures"] = pressures.tolist()
+
+            with self.project_hdf5.open("output/generic") as hdf_output:
+                # This is a hack for backward comparability
+                for k, v in df.items():
+                    hdf_output[k] = np.array(v)
+        else:
+            warnings.warn("LAMMPS warning: No log.lammps output file found.")
 
     def calc_minimize(
             self,
@@ -871,120 +882,123 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
-        output = {}
-        with open(file_name, "r") as ff:
-            dump = ff.readlines()
+        if os.path.exists(file_name):
+            output = {}
+            with open(file_name, "r") as ff:
+                dump = ff.readlines()
 
-        steps = np.genfromtxt(
-            [
-                dump[nn]
-                for nn in np.where([ll.startswith("ITEM: TIMESTEP") for ll in dump])[0]
-                + 1
-            ],
-            dtype=int,
-        )
-        steps = np.array([steps]).flatten()
-        output["steps"] = steps
+            steps = np.genfromtxt(
+                [
+                    dump[nn]
+                    for nn in np.where([ll.startswith("ITEM: TIMESTEP") for ll in dump])[0]
+                    + 1
+                ],
+                dtype=int,
+            )
+            steps = np.array([steps]).flatten()
+            output["steps"] = steps
 
-        natoms = np.genfromtxt(
-            [
-                dump[nn]
-                for nn in np.where(
-                    [ll.startswith("ITEM: NUMBER OF ATOMS") for ll in dump]
-                )[0]
-                + 1
-            ],
-            dtype=int,
-        )
-        natoms = np.array([natoms]).flatten()
+            natoms = np.genfromtxt(
+                [
+                    dump[nn]
+                    for nn in np.where(
+                        [ll.startswith("ITEM: NUMBER OF ATOMS") for ll in dump]
+                    )[0]
+                    + 1
+                ],
+                dtype=int,
+            )
+            natoms = np.array([natoms]).flatten()
 
-        prism = self._prism
-        rotation_lammps2orig = self._prism.R.T
-        cells = np.genfromtxt(
-            " ".join(
-                (
-                    [
-                        " ".join(dump[nn:nn + 3])
-                        for nn in np.where(
-                            [ll.startswith("ITEM: BOX BOUNDS") for ll in dump]
-                        )[0]
-                        + 1
-                    ]
+            prism = self._prism
+            rotation_lammps2orig = self._prism.R.T
+            cells = np.genfromtxt(
+                " ".join(
+                    (
+                        [
+                            " ".join(dump[nn:nn + 3])
+                            for nn in np.where(
+                                [ll.startswith("ITEM: BOX BOUNDS") for ll in dump]
+                            )[0]
+                            + 1
+                        ]
+                    )
+                ).split()
+            ).reshape(len(natoms), -1)
+            lammps_cells = np.array([to_amat(cc) for cc in cells])
+            unfolded_cells = np.array([prism.unfold_cell(cell) for cell in lammps_cells])
+            output["cells"] = unfolded_cells
+
+
+            l_start = np.where([ll.startswith("ITEM: ATOMS") for ll in dump])[0]
+            l_end = l_start + natoms + 1
+            content = [
+                pd.read_csv(
+                    StringIO("\n".join(dump[llst:llen]).replace("ITEM: ATOMS ", "")),
+                    delim_whitespace=True,
                 )
-            ).split()
-        ).reshape(len(natoms), -1)
-        lammps_cells = np.array([to_amat(cc) for cc in cells])
-        unfolded_cells = np.array([prism.unfold_cell(cell) for cell in lammps_cells])
-        output["cells"] = unfolded_cells
+                for llst, llen in zip(l_start, l_end)
+            ]
 
+            indices = np.array([cc["type"] for cc in content], dtype=int)
+            output["indices"] = self.remap_indices(indices)
 
-        l_start = np.where([ll.startswith("ITEM: ATOMS") for ll in dump])[0]
-        l_end = l_start + natoms + 1
-        content = [
-            pd.read_csv(
-                StringIO("\n".join(dump[llst:llen]).replace("ITEM: ATOMS ", "")),
-                delim_whitespace=True,
-            )
-            for llst, llen in zip(l_start, l_end)
-        ]
-
-        indices = np.array([cc["type"] for cc in content], dtype=int)
-        output["indices"] = self.remap_indices(indices)
-
-        forces = np.array(
-            [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
-        )
-        output["forces"] = np.matmul(forces, rotation_lammps2orig)
-
-        if 'f_mean_forces[1]' in content[0].keys():
             forces = np.array(
-                [np.stack((cc["f_mean_forces[1]"],
-                           cc["f_mean_forces[2]"],
-                           cc["f_mean_forces[3]"]),
-                          axis=-1) for cc in content]
+                [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
             )
-            output["mean_forces"] = np.matmul(forces, rotation_lammps2orig)
+            output["forces"] = np.matmul(forces, rotation_lammps2orig)
 
-        if np.all([flag in content[0].columns.values for flag in ["vx", "vy", "vz"]]):
-            velocities = np.array(
-                [np.stack((cc["vx"], cc["vy"], cc["vz"]), axis=-1) for cc in content]
-            )
-            output["velocities"] = np.matmul(velocities, rotation_lammps2orig)
+            if 'f_mean_forces[1]' in content[0].keys():
+                forces = np.array(
+                    [np.stack((cc["f_mean_forces[1]"],
+                               cc["f_mean_forces[2]"],
+                               cc["f_mean_forces[3]"]),
+                              axis=-1) for cc in content]
+                )
+                output["mean_forces"] = np.matmul(forces, rotation_lammps2orig)
 
-        if 'f_mean_velocities[1]' in content[0].keys():
-            velocities = np.array(
-                [np.stack((cc["f_mean_velocities[1]"],
-                           cc["f_mean_velocities[2]"],
-                           cc["f_mean_velocities[3]"]),
-                          axis=-1) for cc in content]
-            )
-            output["mean_velocities"] = np.matmul(velocities, rotation_lammps2orig)
-        direct_unwrapped_positions = np.array(
-            [np.stack((cc["xsu"], cc["ysu"], cc["zsu"]), axis=-1) for cc in content]
-        )
-        unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
-        output["unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
-        if 'f_mean_positions[1]' in content[0].keys():
+            if np.all([flag in content[0].columns.values for flag in ["vx", "vy", "vz"]]):
+                velocities = np.array(
+                    [np.stack((cc["vx"], cc["vy"], cc["vz"]), axis=-1) for cc in content]
+                )
+                output["velocities"] = np.matmul(velocities, rotation_lammps2orig)
+
+            if 'f_mean_velocities[1]' in content[0].keys():
+                velocities = np.array(
+                    [np.stack((cc["f_mean_velocities[1]"],
+                               cc["f_mean_velocities[2]"],
+                               cc["f_mean_velocities[3]"]),
+                              axis=-1) for cc in content]
+                )
+                output["mean_velocities"] = np.matmul(velocities, rotation_lammps2orig)
             direct_unwrapped_positions = np.array(
-                [np.stack((cc["f_mean_positions[1]"],
-                           cc["f_mean_positions[2]"],
-                           cc["f_mean_positions[3]"]),
-                          axis=-1) for cc in content]
+                [np.stack((cc["xsu"], cc["ysu"], cc["zsu"]), axis=-1) for cc in content]
             )
             unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
-            output["mean_unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
+            output["unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
+            if 'f_mean_positions[1]' in content[0].keys():
+                direct_unwrapped_positions = np.array(
+                    [np.stack((cc["f_mean_positions[1]"],
+                               cc["f_mean_positions[2]"],
+                               cc["f_mean_positions[3]"]),
+                              axis=-1) for cc in content]
+                )
+                unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
+                output["mean_unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
 
-        direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
-        positions = np.matmul(direct_positions, lammps_cells)
-        output["positions"] = np.matmul(positions, rotation_lammps2orig)
+            direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
+            positions = np.matmul(direct_positions, lammps_cells)
+            output["positions"] = np.matmul(positions, rotation_lammps2orig)
 
-        keys = content[0].keys()
-        for kk in keys[keys.str.startswith('c_')]:
-            output[kk.replace('c_', '')] = np.array([cc[kk] for cc in content], dtype=float)
+            keys = content[0].keys()
+            for kk in keys[keys.str.startswith('c_')]:
+                output[kk.replace('c_', '')] = np.array([cc[kk] for cc in content], dtype=float)
 
-        with self.project_hdf5.open("output/generic") as hdf_output:
-            for k, v in output.items():
-                hdf_output[k] = v
+            with self.project_hdf5.open("output/generic") as hdf_output:
+                for k, v in output.items():
+                    hdf_output[k] = v
+        else:
+            warnings.warn("LAMMPS warning: No dump.out output file found.")
 
     # Outdated functions:
     def set_potential(self, file_name):

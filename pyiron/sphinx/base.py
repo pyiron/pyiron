@@ -27,7 +27,7 @@ from pyiron.sphinx.potential import SphinxJTHPotentialFile
 from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
 from pyiron.sphinx.volumetric_data import SphinxVolumetricData
-from pyiron_base import Settings, InputList, job_status_successful_lst
+from pyiron_base import Settings, InputList, job_status_successful_lst, deprecate
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -429,7 +429,7 @@ class SphinxBase(GenericDFTJob):
                             "potential": '"' + elem + "_POTCAR" + '"',
                 })
             else:
-                raise ValueError()
+                raise ValueError('Potential must be JTH or VASP')
         if not check_overlap:
             self.input.sphinx.pawPot["species"][-1]["checkOverlap"] = "false"
         if self.input["KJxc"]:
@@ -911,7 +911,7 @@ class SphinxBase(GenericDFTJob):
             check_overlap to False.
         """
         if not isinstance(check_overlap, bool):
-            raise ValueError("check_overlap has to be a boolean")
+            raise TypeError("check_overlap has to be a boolean")
 
         if self.get_version_float() < 2.51 and not check_overlap:
             warnings.warn(
@@ -919,7 +919,7 @@ class SphinxBase(GenericDFTJob):
                 + "in order for the overlap to be considered. "
                 + "Change it via job.executable.version"
             )
-        self.input["CheckOverlap"] = check_overlap
+        self.input.CheckOverlap = check_overlap
 
     def set_mixing_parameters(
         self,
@@ -998,6 +998,8 @@ class SphinxBase(GenericDFTJob):
         if width is not None:
             self.input["Sigma"] = width
 
+    @deprecate(ionic_forces="Use ionic_force_tolerance",
+               ionic_energy="use ionic_energy_tolerance")
     def set_convergence_precision(
             self,
             ionic_energy_tolerance=None,
@@ -1023,18 +1025,8 @@ class SphinxBase(GenericDFTJob):
             ionic_force_tolerance (float): Ionic force convergence precision
         """
         if ionic_forces is not None:
-            warnings.warn(
-                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed "
-                "to be in service in vers. 0.4.0. Use ionic_force_tolerance instead.",
-                DeprecationWarning
-            )
             ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
-            warnings.warn(
-                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed "
-                " to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead.",
-                DeprecationWarning
-            )
             ionic_energy_tolerance =ionic_energy
         assert (
             ionic_energy_tolerance is None or ionic_energy_tolerance > 0
@@ -1245,7 +1237,7 @@ class SphinxBase(GenericDFTJob):
         else:
             potformat = "JTH"
         if not self.input.sphinx.pawPot.read_only:
-            self.load_species_group(potformat=potformat)
+            self.load_species_group(check_overlap=self.input.CheckOverlap, potformat=potformat)
         if not self.input.sphinx.initialGuess.read_only:
             self.load_guess_group()
         if not self.input.sphinx.PAWHamiltonian.read_only:
@@ -1292,7 +1284,7 @@ class SphinxBase(GenericDFTJob):
         # via job.input.pawPot (which is likely True),
         # load it based on job.structure.
         if not structure_sync and not self.input.sphinx.pawPot.read_only:
-            self.load_species_group(potformat=potformat)
+            self.load_species_group(check_overlap=self.input.CheckOverlap, potformat=potformat)
 
         modified_elements = {
             key: value
@@ -2000,29 +1992,31 @@ class Output(object):
 
         """
         file_name = posixpath.join(cwd, file_name)
-        if len(self._parse_dict["bands_eigen_values"]) != 0:
-            return None
         if os.path.isfile(file_name):
             try:
-                self._parse_dict["bands_eigen_values"] = \
-                    np.loadtxt(file_name)[:, 1:]
-            except:
-                self._parse_dict["bands_eigen_values"] = \
-                    np.loadtxt(file_name)[1:]
-        else:
-            if os.path.isfile(posixpath.join(
+                value = np.loadtxt(file_name)[:, 1:]
+            except IndexError:
+                value = np.loadtxt(file_name)[1:]
+        elif os.path.isfile(posixpath.join(
                 cwd, "eps.0.dat")) and os.path.isfile(
                 posixpath.join(cwd, "eps.1.dat")
-            ):
-                eps_up = np.loadtxt(posixpath.join(cwd, "eps.0.dat"))
-                eps_down = np.loadtxt(posixpath.join(cwd, "eps.1.dat"))
-                if len(eps_up.shape) == 2:
-                    eps_up = eps_up[:, 1:]
-                    eps_down = eps_down[:, 1:]
-                else:
-                    eps_up = eps_up[1:]
-                    eps_down = eps_down[1:]
-                self._parse_dict["bands_eigen_values"] = np.array(list(zip(eps_up.tolist(), eps_down.tolist())))
+        ):
+            eps_up = np.loadtxt(posixpath.join(cwd, "eps.0.dat"))
+            eps_down = np.loadtxt(posixpath.join(cwd, "eps.1.dat"))
+            if len(eps_up.shape) == 2:
+                eps_up = eps_up[:, 1:]
+                eps_down = eps_down[:, 1:]
+            else:
+                eps_up = eps_up[1:]
+                eps_down = eps_down[1:]
+            value = np.vstack((eps_up, eps_down)).reshape((2,)+eps_up.shape)
+        else:
+            return
+        shape = np.asarray(self._parse_dict["bands_eigen_values"]).shape
+        if shape[1:] == value.shape:
+            self._parse_dict["bands_eigen_values"][-1] = value
+        else:
+            self._parse_dict["bands_eigen_values"] = value.reshape((-1,)+value.shape)
         return None
 
     def collect_energy_struct(self, file_name="energy-structOpt.dat",
@@ -2391,6 +2385,15 @@ class Output(object):
                 es = self._get_electronic_structure_object()
                 if len(es.kpoint_list) > 0:
                     es.to_hdf(hdf5_output)
+            with hdf5_output.open("electronic_structure") as hdf5_es:
+                if "dos" not in hdf5_es.list_groups():
+                    hdf5_es.create_group("dos")
+                with hdf5_es.open("dos") as hdf5_dos:
+                    warning_message = (
+                        ' is not stored in SPHInX; use job.get_density_of_states instead'
+                    )
+                    for k in ['energies', 'int_densities', 'tot_densities']:
+                        hdf5_dos[k] = k+warning_message
             with hdf5_output.open("generic") as hdf5_generic:
                 if "dft" not in hdf5_generic.list_groups():
                     hdf5_generic.create_group("dft")

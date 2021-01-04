@@ -8,7 +8,7 @@ import os
 import time
 import posixpath
 import warnings
-from pyiron_base import Settings, GenericParameters, Executable
+from pyiron_base import Settings, GenericParameters, Executable, deprecate
 from pyiron.atomistics.job.interactivewrapper import (
     InteractiveWrapper,
     ReferenceJobOutput,
@@ -32,6 +32,8 @@ s = Settings()
 
 
 class SxExtOpt(InteractiveInterface):
+    @deprecate(ionic_forces="Use ionic_force_tolerance",
+               ionic_energy="use ionic_energy_tolerance")
     def __init__(
         self,
         structure,
@@ -48,22 +50,8 @@ class SxExtOpt(InteractiveInterface):
         ssa=False,
     ):
         if ionic_forces is not None:
-            warnings.warn(
-                (
-                        'ionic_forces is deprecated as of vers. 0.3.0.' +
-                        'It is not guaranteed to be in service in vers. 0.4.0.' +
-                        'Use ionic_force_tolerance instead'
-                ), DeprecationWarning
-            )
             ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
-            warnings.warn(
-                (
-                        'ionic_energy is deprecated as of vers. 0.3.0.' +
-                        'It is not guaranteed to be in service in vers. 0.4.0.' +
-                        'Use ionic_energy_tolerance instead'
-                ), DeprecationWarning
-            )
             ionic_energy_tolerance = ionic_energy
         super().__init__()
         self.__name__ = "SxExtOpt"

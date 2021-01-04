@@ -51,6 +51,7 @@ class TestSphinx(unittest.TestCase):
             scaled_positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
             cell=2.83 * np.eye(3),
         )
+        cls.sphinx_2_5.structure.set_initial_magnetic_moments([2,2])
         cls.sphinx_aborted.structure = Atoms(
             elements=32 * ["Fe"],
             scaled_positions=np.arange(32 * 3).reshape(-1, 3) / (32 * 3),
@@ -69,6 +70,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
+        cls.sphinx_2_5.collect_output()
 
     @classmethod
     def tearDownClass(cls):
@@ -370,7 +372,7 @@ class TestSphinx(unittest.TestCase):
         self.assertFalse(self.sphinx_band_structure.check_setup())
 
     def test_set_check_overlap(self):
-        self.assertRaises(ValueError, self.sphinx_band_structure.set_check_overlap, 0)
+        self.assertRaises(TypeError, self.sphinx_band_structure.set_check_overlap, 0)
 
     def test_set_occupancy_smearing(self):
         self.assertRaises(
@@ -539,7 +541,6 @@ class TestSphinx(unittest.TestCase):
         self.assertIsNotNone(vel.total_data)
 
     def test_check_band_occupancy(self):
-        self.sphinx_2_5.collect_output()
         self.assertTrue(self.sphinx_2_5.output.check_band_occupancy())
 
     def test_collect_2_3(self):
@@ -582,6 +583,10 @@ class TestSphinx(unittest.TestCase):
         self.sphinx_2_3._output_parser.collect_relaxed_hist(
             file_name="relaxedHist_2.sx", cwd=self.sphinx_2_3.working_directory
         )
+
+    def test_density_of_states(self):
+        dos = self.sphinx_2_5.get_density_of_states()
+        self.assertLess(dos['grid'][dos['dos'][0].argmax()], 0)
 
 
 if __name__ == "__main__":
