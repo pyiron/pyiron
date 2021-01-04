@@ -8,7 +8,7 @@ dependencies:
   - defusedxml >=0.6.0
   - future >=0.18.2
   - h5py >=3.1.0
-  - matplotlib >=3.3.3
+  - matplotlib-base >=3.3.3
   - mendeleev >=0.6.1
   - molmod >=1.4.8
   - numpy >=1.19.4
