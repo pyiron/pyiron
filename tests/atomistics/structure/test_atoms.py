@@ -818,13 +818,11 @@ class TestAtoms(unittest.TestCase):
             self.assertGreaterEqual(len(w), 1)
 
     def test_analyse_ovito_centro_symmetry(self):
-        basis = Atoms(
-            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
-        )
+        basis = CrystalStructure('Fe', bravais_basis='bcc', lattice_constants=2.8)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             self.assertTrue(
-                np.allclose(basis.analyse_ovito_centro_symmetry() ,np.array([0.75, 0.]))
+                all([np.isclose(v, 0.0) for v in basis.analyse_ovito_centro_symmetry(num_neighbors=8)])
             )
             self.assertGreaterEqual(len(w), 1)
 
@@ -861,12 +859,12 @@ class TestAtoms(unittest.TestCase):
             self.assertGreaterEqual(len(w), 1)
 
     def test_pyscal_centro_symmetry(self):
-        basis = Atoms(
-            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
-        )
+        basis = CrystalStructure('Fe', bravais_basis='bcc', lattice_constants=2.8)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            self.assertTrue(np.allclose(basis.analyse_pyscal_centro_symmetry(), np.array([0.75, 0.])))
+            self.assertTrue(
+                all([np.isclose(v, 0.0) for v in basis.analyse_pyscal_centro_symmetry(num_neighbors=8)])
+            )
             self.assertGreaterEqual(len(w), 1)
 
     def test_analyse_pyscal_diamond_structure(self):

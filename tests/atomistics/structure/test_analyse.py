@@ -57,11 +57,9 @@ class TestAtoms(unittest.TestCase):
         )
 
     def test_pyscal_centro_symmetry(self):
-        basis = Atoms(
-            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
-        )
+        basis = CrystalStructure('Fe', bravais_basis='bcc', lattice_constants=2.8)
         self.assertTrue(
-            np.allclose(basis.analyse.pyscal_centro_symmetry(), np.array([0.75, 0.]))
+            all([np.isclose(v, 0.0) for v in basis.analyse.pyscal_centro_symmetry(num_neighbors=8)])
         )
 
 
