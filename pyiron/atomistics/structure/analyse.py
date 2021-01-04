@@ -6,6 +6,8 @@ import numpy as np
 from pyiron_base import Settings
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import coo_matrix
+from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure, analyse_cna_adaptive, \
+    analyse_centro_symmetry, analyse_diamond_structure, analyse_voronoi_volume
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
@@ -46,7 +48,7 @@ class Analyse:
     def __init__(self, structure):
         """
         Args:
-            structure (pyiron.atomistics.structure.atoms.Atoms): reference Atom structure.
+            structure (:class:`pyiron.atomistics.structure.atoms.Atoms`): reference Atom structure.
         """
         self._structure = structure
 
@@ -130,4 +132,77 @@ class Analyse:
             return np.asarray(layers).flatten()
         return np.vstack(layers).T
 
+    def pyscal_steinhardt_parameter(self, neighbor_method="cutoff", cutoff=0, n_clusters=2,
+                                            q=(4, 6), averaged=False, clustering=True):
+        """
+        Calculate Steinhardts parameters
+
+        Args:
+            neighbor_method (str) : can be ['cutoff', 'voronoi']
+            cutoff (float) : can be 0 for adaptive cutoff or any other value
+            n_clusters (int) : number of clusters for K means clustering
+            q (list) : can be from 2-12, the required q values to be calculated
+            averaged (bool) : If True, calculates the averaged versions of the parameter
+            clustering (bool) : If True, cluster based on the q values
+
+        Returns:
+            list: calculated q parameters
+
+        """
+        return get_steinhardt_parameter_structure(
+            self._structure, neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
+            q=q, averaged=averaged, clustering=clustering
+        )
+
+    def pyscal_cna_adaptive(self, mode="total", ovito_compatibility=False):
+        """
+        Use common neighbor analysis
+
+        Args:
+            mode ("total"/"numeric"/"str"): Controls the style and level
+                of detail of the output.
+                - total : return number of atoms belonging to each structure
+                - numeric : return a per atom list of numbers- 0 for unknown,
+                    1 fcc, 2 hcp, 3 bcc and 4 icosa
+                - str : return a per atom string of sructures
+            ovito_compatibility(bool): use ovito compatiblity mode
+
+        Returns:
+            (depends on `mode`)
+        """
+        return analyse_cna_adaptive(atoms=self._structure, mode=mode, ovito_compatibility=ovito_compatibility)
+
+    def pyscal_centro_symmetry(self, num_neighbors=12):
+        """
+        Analyse centrosymmetry parameter
+
+        Args:
+            num_neighbors (int) : number of neighbors
+
+        Returns:
+            list: list of centrosymmetry parameter
+        """
+        return analyse_centro_symmetry(atoms=self._structure, num_neighbors=num_neighbors)
+
+    def pyscal_diamond_structure(self, mode="total", ovito_compatibility=False):
+        """
+        Analyse diamond structure
+
+        Args:
+            mode ("total"/"numeric"/"str"): Controls the style and level
+            of detail of the output.
+                - total : return number of atoms belonging to each structure
+                - numeric : return a per atom list of numbers- 0 for unknown,
+                    1 fcc, 2 hcp, 3 bcc and 4 icosa
+                - str : return a per atom string of sructures
+            ovito_compatibility(bool): use ovito compatiblity mode
+
+        Returns:
+            (depends on `mode`)
+        """
+        return analyse_diamond_structure(atoms=self._structure, mode=mode, ovito_compatibility=ovito_compatibility)
+
+    def pyscal_voronoi_volume(self):
+        """    Calculate the Voronoi volume of atoms        """
+        return analyse_voronoi_volume(atoms=self._structure)
 

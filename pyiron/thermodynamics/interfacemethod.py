@@ -413,11 +413,11 @@ def check_diamond(structure):
     Returns:
         bool: true if diamond else false
     """
-    cna_dict = structure.analyse_pyscal_cna_adaptive(
+    cna_dict = structure.analyse.pyscal_cna_adaptive(
         mode="total",
         ovito_compatibility=True
     )
-    dia_dict = structure.analyse_pyscal_diamond_structure(
+    dia_dict = structure.analyse.pyscal_diamond_structure(
         mode="total",
         ovito_compatibility=True
     )
@@ -443,12 +443,12 @@ def analyse_structure(structure, mode="total", diamond=False):
         (depends on `mode`)
     """
     if not diamond:
-        return structure.analyse_pyscal_cna_adaptive(
+        return structure.analyse.pyscal_cna_adaptive(
             mode=mode,
             ovito_compatibility=True
         )
     else:
-        return structure.analyse_pyscal_diamond_structure(
+        return structure.analyse.pyscal_diamond_structure(
             mode=mode,
             ovito_compatibility=True
         )
@@ -1271,7 +1271,7 @@ def get_voronoi_volume(temperature_next, strain_lst, nve_run_time_steps, project
             nve_run_time_steps=nve_run_time_steps
         )
         ham_nve = project_parameter['project'].load(job_name)
-        structure_voronoi_lst = ham_nve.get_structure().analyse_pyscal_voronoi_volume()
+        structure_voronoi_lst = ham_nve.get_structure().analyse.pyscal_voronoi_volume()
         max_lst.append(np.max(structure_voronoi_lst))
         mean_lst.append(np.mean(structure_voronoi_lst))
     return max_lst, mean_lst
