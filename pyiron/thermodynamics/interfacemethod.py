@@ -14,7 +14,7 @@ import operator
 import os
 import matplotlib.pylab as plt
 import random
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 
 __author__ = "Lifang Zhu, Jan Janssen"
 __copyright__ = "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH " \
