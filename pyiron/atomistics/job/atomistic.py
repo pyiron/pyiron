@@ -9,7 +9,7 @@ import numpy as np
 import warnings
 
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron_base import GenericParameters, GenericMaster, GenericJob as GenericJobCore
+from pyiron_base import GenericParameters, GenericMaster, GenericJob as GenericJobCore, deprecate
 
 try:
     from pyiron_base import ProjectGUI
@@ -606,16 +606,14 @@ class AtomisticGenericJob(GenericJobCore):
         )
 
     # Compatibility functions
+    @deprecate("Use get_structure()")
     def get_final_structure(self):
         """
+        Get the final structure calculated from the job.
 
         Returns:
-
+            :class:`.Atoms`
         """
-        warnings.warn(
-            "get_final_structure() is deprecated - please use get_structure() instead.",
-            DeprecationWarning,
-        )
         return self.get_structure(iteration_step=-1)
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):

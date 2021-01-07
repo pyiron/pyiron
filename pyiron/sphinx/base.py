@@ -27,7 +27,7 @@ from pyiron.sphinx.potential import SphinxJTHPotentialFile
 from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
 from pyiron.sphinx.volumetric_data import SphinxVolumetricData
-from pyiron_base import Settings, InputList, job_status_successful_lst
+from pyiron_base import Settings, InputList, job_status_successful_lst, deprecate
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -429,7 +429,7 @@ class SphinxBase(GenericDFTJob):
                             "potential": '"' + elem + "_POTCAR" + '"',
                 })
             else:
-                raise ValueError()
+                raise ValueError('Potential must be JTH or VASP')
         if not check_overlap:
             self.input.sphinx.pawPot["species"][-1]["checkOverlap"] = "false"
         if self.input["KJxc"]:
@@ -911,7 +911,7 @@ class SphinxBase(GenericDFTJob):
             check_overlap to False.
         """
         if not isinstance(check_overlap, bool):
-            raise ValueError("check_overlap has to be a boolean")
+            raise TypeError("check_overlap has to be a boolean")
 
         if self.get_version_float() < 2.51 and not check_overlap:
             warnings.warn(
@@ -919,7 +919,7 @@ class SphinxBase(GenericDFTJob):
                 + "in order for the overlap to be considered. "
                 + "Change it via job.executable.version"
             )
-        self.input["CheckOverlap"] = check_overlap
+        self.input.CheckOverlap = check_overlap
 
     def set_mixing_parameters(
         self,
@@ -998,6 +998,8 @@ class SphinxBase(GenericDFTJob):
         if width is not None:
             self.input["Sigma"] = width
 
+    @deprecate(ionic_forces="Use ionic_force_tolerance",
+               ionic_energy="use ionic_energy_tolerance")
     def set_convergence_precision(
             self,
             ionic_energy_tolerance=None,
@@ -1023,18 +1025,8 @@ class SphinxBase(GenericDFTJob):
             ionic_force_tolerance (float): Ionic force convergence precision
         """
         if ionic_forces is not None:
-            warnings.warn(
-                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed "
-                "to be in service in vers. 0.4.0. Use ionic_force_tolerance instead.",
-                DeprecationWarning
-            )
             ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
-            warnings.warn(
-                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed "
-                " to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead.",
-                DeprecationWarning
-            )
             ionic_energy_tolerance =ionic_energy
         assert (
             ionic_energy_tolerance is None or ionic_energy_tolerance > 0
@@ -1245,7 +1237,7 @@ class SphinxBase(GenericDFTJob):
         else:
             potformat = "JTH"
         if not self.input.sphinx.pawPot.read_only:
-            self.load_species_group(potformat=potformat)
+            self.load_species_group(check_overlap=self.input.CheckOverlap, potformat=potformat)
         if not self.input.sphinx.initialGuess.read_only:
             self.load_guess_group()
         if not self.input.sphinx.PAWHamiltonian.read_only:
@@ -1292,7 +1284,7 @@ class SphinxBase(GenericDFTJob):
         # via job.input.pawPot (which is likely True),
         # load it based on job.structure.
         if not structure_sync and not self.input.sphinx.pawPot.read_only:
-            self.load_species_group(potformat=potformat)
+            self.load_species_group(check_overlap=self.input.CheckOverlap, potformat=potformat)
 
         modified_elements = {
             key: value
