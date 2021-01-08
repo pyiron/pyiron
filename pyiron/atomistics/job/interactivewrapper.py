@@ -24,8 +24,6 @@ __date__ = "Sep 1, 2017"
 class InteractiveWrapper(InteractiveWrapperBase):
     def __init__(self, project, job_name):
         super(InteractiveWrapper, self).__init__(project, job_name)
-        self._ref_job = None
-        self.input = GenericParameters("parameters")
 
     @property
     def structure(self):
