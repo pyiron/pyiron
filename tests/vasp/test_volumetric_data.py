@@ -6,7 +6,7 @@ import unittest
 import os
 import posixpath
 import numpy as np
-from pyiron.vasp.volumetric_data import VaspVolumetricData
+from pyiron_atomistic.vasp.volumetric_data import VaspVolumetricData
 
 
 class TestVaspVolumetricData(unittest.TestCase):

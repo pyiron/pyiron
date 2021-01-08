@@ -4,7 +4,7 @@
 
 import os
 import unittest
-from pyiron.project import Project
+from pyiron_atomistic.project import Project
 import numpy as np
 
 

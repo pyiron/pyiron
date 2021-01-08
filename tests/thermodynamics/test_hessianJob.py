@@ -6,7 +6,7 @@ import os
 import unittest
 import numpy as np
 from pyiron_base import Project
-from pyiron.atomistics.structure.atoms import Atoms
+from pyiron_atomistic.atomistics.structure.atoms import Atoms
 
 
 class TestHessianJob(unittest.TestCase):

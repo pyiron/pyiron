@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import unittest
-from pyiron.atomistics.structure.sparse_list import SparseList, SparseArray
+from pyiron_atomistic.atomistics.structure.sparse_list import SparseList, SparseArray
 
 
 class TestSparseList(unittest.TestCase):

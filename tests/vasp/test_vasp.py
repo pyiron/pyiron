@@ -5,13 +5,13 @@
 import unittest
 import os
 import posixpath
-from pyiron.atomistics.structure.atoms import CrystalStructure
-from pyiron.vasp.base import Input, Output
+from pyiron_atomistic.atomistics.structure.atoms import CrystalStructure
+from pyiron_atomistic.vasp.base import Input, Output
 from pyiron_base import ProjectHDFio, Project
-from pyiron.vasp.potential import VaspPotentialSetter
-from pyiron.vasp.vasp import Vasp
-from pyiron.vasp.metadyn import VaspMetadyn
-from pyiron.vasp.structure import read_atoms
+from pyiron_atomistic.vasp.potential import VaspPotentialSetter
+from pyiron_atomistic.vasp.vasp import Vasp
+from pyiron_atomistic.vasp.metadyn import VaspMetadyn
+from pyiron_atomistic.vasp.structure import read_atoms
 import numpy as np
 
 __author__ = "Sudarsan Surendralal"
@@ -19,7 +19,7 @@ __author__ = "Sudarsan Surendralal"
 
 class TestVasp(unittest.TestCase):
     """
-    Tests the pyiron.objects.hamilton.dft.vasp.Vasp class
+    Tests the pyiron_atomistic.objects.hamilton.dft.vasp.Vasp class
     """
 
     @classmethod

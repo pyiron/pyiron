@@ -5,8 +5,8 @@
 import unittest
 import os
 import numpy as np
-from pyiron.project import Project
-from pyiron.table.funct import get_majority
+from pyiron_atomistic.project import Project
+from pyiron_atomistic.table.funct import get_majority
 
 
 class TestDatamining(unittest.TestCase):

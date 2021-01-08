@@ -4,7 +4,7 @@
 
 import unittest
 import os
-from pyiron.vasp.potential import get_enmax_among_potentials, strip_xc_from_potential_name
+from pyiron_atomistic.vasp.potential import get_enmax_among_potentials, strip_xc_from_potential_name
 
 
 class TestPotential(unittest.TestCase):

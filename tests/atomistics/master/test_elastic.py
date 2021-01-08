@@ -4,9 +4,9 @@
 
 import os
 import unittest
-from pyiron.atomistics.structure.atoms import CrystalStructure
+from pyiron_atomistic.atomistics.structure.atoms import CrystalStructure
 from pyiron_base import Project
-from pyiron.atomistics.master.elastic import calc_elastic_tensor, _get_higher_order_strains
+from pyiron_atomistic.atomistics.master.elastic import calc_elastic_tensor, _get_higher_order_strains
 import numpy as np
 
 

@@ -4,7 +4,7 @@
 
 import unittest
 import numpy as np
-from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron_atomistic.atomistics.structure.atoms import Atoms, CrystalStructure
 import warnings
 
 

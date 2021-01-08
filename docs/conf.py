@@ -295,7 +295,7 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
 
-main(['-e', '-o', 'apidoc', '../pyiron', '--force'])
+main(['-e', '-o', 'apidoc', '../pyiron_atomistic', '--force'])
 
 curdir = os.path.dirname(os.path.abspath(__file__))
 if os.path.exists(os.path.join(curdir, 'source/notebooks')):
@@ -305,7 +305,7 @@ shutil.copytree(os.path.join(curdir, '..', 'notebooks'),
                 os.path.join(curdir, 'source/notebooks'))
 
 if 'readthedocs.org' in curdir:  # write config for readthedocs.org
-    with open(os.path.join(os.path.expanduser('~/.pyiron')), 'w') as f:
+    with open(os.path.join(os.path.expanduser('~/.pyiron_atomistic')), 'w') as f:
         f.writelines(['[DEFAULT]',
                       'TOP_LEVEL_DIRS = ' + os.path.join(curdir, '..'),
                       'RESOURCE_PATHS = ' + os.path.join(curdir, '..') + '/tests/static'])

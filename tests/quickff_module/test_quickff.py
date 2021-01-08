@@ -9,15 +9,15 @@ import posixpath
 import numpy as np
 from molmod.units import *
 
-from pyiron.atomistics.structure.atoms import Atoms
+from pyiron_atomistic.atomistics.structure.atoms import Atoms
 from pyiron_base import ProjectHDFio, Project
 
-from pyiron.quickff.quickff import QuickFFInput
-from pyiron.quickff.quickff import QuickFF
+from pyiron_atomistic.quickff.quickff import QuickFFInput
+from pyiron_atomistic.quickff.quickff import QuickFF
 
 class TestQuickFF(unittest.TestCase):
         """
-        Tests the pyiron.quickff.quickff QuickFF class
+        Tests the pyiron_atomistic.quickff.quickff QuickFF class
         """
 
         @classmethod

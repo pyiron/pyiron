@@ -9,16 +9,16 @@ import posixpath
 import numpy as np
 from molmod.units import *
 
-from pyiron.atomistics.structure.atoms import Atoms
+from pyiron_atomistic.atomistics.structure.atoms import Atoms
 from pyiron_base import ProjectHDFio, Project
 
-from pyiron.yaff.yaff import YaffInput
-from pyiron.yaff.yaff import Yaff
+from pyiron_atomistic.yaff.yaff import YaffInput
+from pyiron_atomistic.yaff.yaff import Yaff
 
 
 class TestYaff(unittest.TestCase):
     """
-    Tests the pyiron.yaff.yaff Yaff class
+    Tests the pyiron_atomistic.yaff.yaff Yaff class
     """
 
     @classmethod

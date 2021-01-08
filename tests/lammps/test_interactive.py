@@ -6,8 +6,8 @@ import unittest
 import numpy as np
 import os
 from pyiron_base import Project, ProjectHDFio
-from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.lammps.lammps import Lammps
+from pyiron_atomistic.atomistics.structure.atoms import Atoms
+from pyiron_atomistic.lammps.lammps import Lammps
 
 
 class InteractiveLibrary(object):

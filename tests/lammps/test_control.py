@@ -5,7 +5,7 @@
 import numpy as np
 from scipy.spatial.transform import Rotation
 import unittest
-from pyiron.lammps.control import LammpsControl, LAMMPS_UNIT_CONVERSIONS
+from pyiron_atomistic.lammps.control import LammpsControl, LAMMPS_UNIT_CONVERSIONS
 
 
 class TestLammps(unittest.TestCase):

@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 import versioneer
 
 setup(
-    name='pyiron',
+    name='pyiron_atomistic',
     version=versioneer.get_version(),
     description='pyiron - an integrated development environment (IDE) for computational materials science.',
     long_description='http://pyiron.org',
@@ -28,7 +28,7 @@ setup(
                  'Programming Language :: Python :: 3.8',
                  'Programming Language :: Python :: 3.9'],
 
-    keywords='pyiron',
+    keywords='pyiron_atomistic',
     packages=find_packages(exclude=["*tests*", "*docs*", "*binder*", "*conda*", "*notebooks*", "*.ci_support*"]),
     install_requires=[
         'ase>=3.20.1',

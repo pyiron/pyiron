@@ -5,14 +5,14 @@
 import unittest
 import numpy as np
 import pyscal.core as pc
-from pyiron.project import Project
+from pyiron_atomistic.project import Project
 from pyiron_base import ProjectHDFio
-from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron_atomistic.atomistics.job.atomistic import AtomisticGenericJob
+from pyiron_atomistic.atomistics.structure.atoms import Atoms, CrystalStructure
 import os
 from ase.build import bulk
-from pyiron.atomistics.structure.atoms import ase_to_pyiron
-import pyiron.atomistics.structure.pyscal as pas
+from pyiron_atomistic.atomistics.structure.atoms import ase_to_pyiron
+import pyiron_atomistic.atomistics.structure.pyscal as pas
 
 
 class Testpyscal(unittest.TestCase):

@@ -5,9 +5,9 @@
 import unittest
 import numpy as np
 import os
-from pyiron.project import Project
-from pyiron.vasp.vasp import Vasp
-from pyiron.vasp.volumetric_data import VaspVolumetricData
+from pyiron_atomistic.project import Project
+from pyiron_atomistic.vasp.vasp import Vasp
+from pyiron_atomistic.vasp.volumetric_data import VaspVolumetricData
 import warnings
 
 

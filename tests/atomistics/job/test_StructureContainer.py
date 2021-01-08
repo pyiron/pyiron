@@ -4,7 +4,7 @@
 
 import unittest
 import os
-from pyiron.project import Project
+from pyiron_atomistic.project import Project
 
 
 class TestStructureContainer(unittest.TestCase):

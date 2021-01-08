@@ -4,8 +4,8 @@
 
 from ase.atom import Atom as ASEAtom
 import unittest
-from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron
-from pyiron.atomistics.structure.periodic_table import PeriodicTable
+from pyiron_atomistic.atomistics.structure.atom import Atom, ase_to_pyiron
+from pyiron_atomistic.atomistics.structure.periodic_table import PeriodicTable
 
 
 class TestAtom(unittest.TestCase):

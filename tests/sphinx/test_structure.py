@@ -7,8 +7,8 @@ import unittest
 import os
 import numpy as np
 import scipy.constants
-from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.sphinx.structure import read_atoms
+from pyiron_atomistic.atomistics.structure.atoms import Atoms
+from pyiron_atomistic.sphinx.structure import read_atoms
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = (

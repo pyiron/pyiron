@@ -7,11 +7,11 @@ import unittest
 import numpy as np
 import pandas
 from ase.build import bulk
-from pyiron.atomistics.structure.atoms import ase_to_pyiron
-import pyiron
+from pyiron_atomistic.atomistics.structure.atoms import ase_to_pyiron
+import pyiron_atomistic
 from pyiron_base import Project
-from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.thermodynamics.interfacemethod import half_velocity, \
+from pyiron_atomistic.atomistics.structure.atoms import Atoms
+from pyiron_atomistic.thermodynamics.interfacemethod import half_velocity, \
     freeze_one_half, fix_iso, fix_z_dir, create_job_template, check_diamond
 
 
@@ -61,7 +61,7 @@ class TestHessianJob(unittest.TestCase):
 
     def test_job_creation(self):
         job = self.job.copy()
-        self.assertTrue(isinstance(job, pyiron.lammps.lammps.Lammps))
+        self.assertTrue(isinstance(job, pyiron_atomistic.lammps.lammps.Lammps))
         self.assertEqual(job.server.cores, self.cpu_cores)
 
     def test_fix_iso(self):

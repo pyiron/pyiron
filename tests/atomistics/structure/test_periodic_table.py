@@ -4,8 +4,8 @@
 
 import unittest
 import os
-from pyiron.atomistics.structure.atoms import CrystalStructure
-from pyiron.atomistics.structure.periodic_table import PeriodicTable
+from pyiron_atomistic.atomistics.structure.atoms import CrystalStructure
+from pyiron_atomistic.atomistics.structure.periodic_table import PeriodicTable
 from pyiron_base import Project
 
 

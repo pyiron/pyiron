@@ -4,8 +4,8 @@
 
 import unittest
 import numpy as np
-from pyiron.atomistics.structure.atoms import CrystalStructure
-from pyiron.dft.waves.bandstructure import Bandstructure
+from pyiron_atomistic.atomistics.structure.atoms import CrystalStructure
+from pyiron_atomistic.dft.waves.bandstructure import Bandstructure
 
 
 class TestBandStructure(unittest.TestCase):

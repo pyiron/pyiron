@@ -5,10 +5,10 @@
 import unittest
 import numpy as np
 import os
-from pyiron.project import Project
+from pyiron_atomistic.project import Project
 from pyiron_base import ProjectHDFio
-from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron_atomistic.atomistics.job.atomistic import AtomisticGenericJob
+from pyiron_atomistic.atomistics.structure.atoms import Atoms, CrystalStructure
 import warnings
 
 
