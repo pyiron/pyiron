@@ -1486,8 +1486,8 @@ class SphinxBase(GenericDFTJob):
                 )
             if self.get_n_ir_reciprocal_points() < self.server.cores:
                 warnings.warn(
-                    "Number of cores exceed number of irreducible \
-                        reciprocal points: "
+                    "Number of cores exceed number of irreducible "
+                    + "reciprocal points: "
                     + str(self.get_n_ir_reciprocal_points())
                 )
             if self.input["EmptyStates"] == "auto":
