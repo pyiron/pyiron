@@ -4,7 +4,7 @@
 
 import numpy as np
 from pyiron_base import Settings
-from pyiron.atomistics.structure.atoms import pyiron_to_ase
+import pyiron.atomistics.structure.atoms
 import pyscal.core as pc
 from sklearn import cluster
 
@@ -43,7 +43,7 @@ def get_steinhardt_parameter_structure(atoms, neighbor_method="cutoff", cutoff=0
     s.publication_add(publication())
     sys = pc.System()
     sys.read_inputfile(
-        pyiron_to_ase(atoms),
+        pyiron.atomistics.structure.atoms.pyiron_to_ase(atoms),
         format='ase'
     )
 

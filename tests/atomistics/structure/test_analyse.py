@@ -48,6 +48,20 @@ class TestAtoms(unittest.TestCase):
         structure.center_coordinates_in_unit_cell()
         self.assertEqual(len(np.unique(layers[structure.analyse.get_layers()[:,0]==0,0])), 1)
 
+    def test_pyscal_cna_adaptive(self):
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+        )
+        self.assertTrue(
+            basis.analyse.pyscal_cna_adaptive()["bcc"] == 2
+        )
+
+    def test_pyscal_centro_symmetry(self):
+        basis = CrystalStructure('Fe', bravais_basis='bcc', lattice_constants=2.8)
+        self.assertTrue(
+            all([np.isclose(v, 0.0) for v in basis.analyse.pyscal_centro_symmetry(num_neighbors=8)])
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

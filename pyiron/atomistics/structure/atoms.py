@@ -21,7 +21,8 @@ from pyiron.atomistics.structure.periodic_table import (
     ChemicalElement
 )
 from pyiron_base import Settings
-from pyiron_base.generic.util import deprecate
+from pyiron_base import deprecate, deprecate_soon
+
 from scipy.spatial import cKDTree, Voronoi
 import spglib
 
@@ -1016,125 +1017,53 @@ class Atoms(ASEAtoms):
     def reset_absolute(self, is_absolute):
         raise NotImplementedError("This function was removed!")
 
+    @deprecate("Use Atoms.analyse.pyscal_cna_adaptive() with ovito_compatibility=True instead")
     def analyse_ovito_cna_adaptive(self, mode="total"):
-        warnings.warn(
-            "analyse_ovito_cna_adaptive() is available for backwards compatiblity, " +
-            "please use analyse_pyscal_cna_adaptive()",
-            DeprecationWarning
-        )
-        return self.analyse_pyscal_cna_adaptive(mode=mode, ovito_compatibility=True)
+        return self._analyse.pyscal_cna_adaptive(mode=mode, ovito_compatibility=True)
+    analyse_ovito_cna_adaptive.__doc__ = Analyse.pyscal_cna_adaptive.__doc__
 
+    @deprecate('Use Atoms.analyse.pyscal_centro_symmetry() instead')
     def analyse_ovito_centro_symmetry(self, num_neighbors=12):
-        warnings.warn(
-            "analyse_ovito_centro_symmetry() is available for backwards compatiblity, " +
-            "please use analyse_pyscal_centro_symmetry()",
-            DeprecationWarning
-        )
-        return self.analyse_pyscal_centro_symmetry(num_neighbors=num_neighbors)
+        return self._analyse.pyscal_centro_symmetry(num_neighbors=num_neighbors)
+    analyse_ovito_centro_symmetry.__doc__ = Analyse.pyscal_centro_symmetry.__doc__
 
+    @deprecate("Use Atoms.analyse.pyscal_voronoi_volume() instead")
     def analyse_ovito_voronoi_volume(self):
-        warnings.warn(
-            "analyse_ovito_voronoi_volume() is available for backwards compatiblity, " +
-            "please use analyse_pyscal_voronoi_volume()",
-            DeprecationWarning
-        )
-        return self.analyse_pyscal_voronoi_volume()
+        return self._analyse.pyscal_voronoi_volume()
+    analyse_ovito_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
 
+    @deprecate("Use Atoms.analyse.pyscal_steinhardt_parameter() instead")
     def analyse_pyscal_steinhardt_parameter(self, neighbor_method="cutoff", cutoff=0, n_clusters=2,
                                             q=(4, 6), averaged=False, clustering=True):
-        """
-        Calculate Steinhardts parameters
-
-        Args:
-            job (job): pyiron job
-            neighbor_method (str) : can be ['cutoff', 'voronoi']
-            cutoff (float) : can be 0 for adaptive cutoff or any other value
-            n_clusters (int) : number of clusters for K means clustering
-            q (list) : can be from 2-12, the required q values to be calculated
-            averaged (bool) : If True, calculates the averaged versions of the parameter
-            clustering (bool) : If True, cluster based on the q values
-
-        Returns:
-            q (list) : calculated q parameters
-
-        """
-        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
-        return get_steinhardt_parameter_structure(
-            structure=self, neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
+        return self._analyse.pyscal_steinhardt_parameter(
+            neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
             q=q, averaged=averaged, clustering=clustering
         )
+    analyse_pyscal_steinhardt_parameter.__doc__ = Analyse.pyscal_steinhardt_parameter.__doc__
 
+    @deprecate("Use Atoms.analyse.pyscal_cna_adaptive() instead")
     def analyse_pyscal_cna_adaptive(self, mode="total", ovito_compatibility=False):
-        """
-        Use common neighbor analysis
+        return self._analyse.pyscal_cna_adaptive(mode=mode, ovito_compatibility=ovito_compatibility)
+    analyse_pyscal_cna_adaptive.__doc__ = Analyse.pyscal_cna_adaptive.__doc__
 
-        Args:
-            atoms (pyiron.structure.atoms.Atoms): The structure to analyze.
-            mode ("total"/"numeric"/"str"): Controls the style and level
-                of detail of the output.
-                - total : return number of atoms belonging to each structure
-                - numeric : return a per atom list of numbers- 0 for unknown,
-                    1 fcc, 2 hcp, 3 bcc and 4 icosa
-                - str : return a per atom string of sructures
-            ovito_compatibility(bool): use ovito compatiblity mode
-
-        Returns:
-            (depends on `mode`)
-        """
-        from pyiron.atomistics.structure.pyscal import analyse_cna_adaptive
-        return analyse_cna_adaptive(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
-
+    @deprecate("Use Atoms.analyse.pyscal_centro_symmetry() instead")
     def analyse_pyscal_centro_symmetry(self, num_neighbors=12):
-        """
-        Analyse centrosymmetry parameter
+        return self._analyse.pyscal_centro_symmetry(num_neighbors=num_neighbors)
+    analyse_pyscal_centro_symmetry.__doc__ = Analyse.pyscal_centro_symmetry.__doc__
 
-        Args:
-            atoms: Atoms object
-            num_neighbors (int) : number of neighbors
-
-        Returns:
-            csm (list) : list of centrosymmetry parameter
-        """
-        from pyiron.atomistics.structure.pyscal import analyse_centro_symmetry
-        return analyse_centro_symmetry(atoms=self, num_neighbors=num_neighbors)
-
+    @deprecate("Use Atoms.analyse.pyscal_diamond_structure() instead")
     def analyse_pyscal_diamond_structure(self, mode="total", ovito_compatibility=False):
-        """
-        Analyse diamond structure
+        return self._analyse.pyscal_diamond_structure(mode=mode, ovito_compatibility=ovito_compatibility)
+    analyse_pyscal_diamond_structure.__doc__ = Analyse.pyscal_diamond_structure.__doc__
 
-        Args:
-            atoms: Atoms object
-            mode ("total"/"numeric"/"str"): Controls the style and level
-            of detail of the output.
-                - total : return number of atoms belonging to each structure
-                - numeric : return a per atom list of numbers- 0 for unknown,
-                    1 fcc, 2 hcp, 3 bcc and 4 icosa
-                - str : return a per atom string of sructures
-            ovito_compatibility(bool): use ovito compatiblity mode
-
-        Returns:
-            (depends on `mode`)
-        """
-        from pyiron.atomistics.structure.pyscal import analyse_diamond_structure
-        return analyse_diamond_structure(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
-
+    @deprecate("Use Atoms.analyse.pyscal_voronoi_volume() instead")
     def analyse_pyscal_voronoi_volume(self):
-        """
-        Calculate the Voronoi volume of atoms
+        return self._analyse.pyscal_voronoi_volume()
+    analyse_pyscal_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
 
-        Args:
-            atoms : (pyiron.structure.atoms.Atoms): The structure to analyze.
-        """
-        from pyiron.atomistics.structure.pyscal import analyse_voronoi_volume
-        return analyse_voronoi_volume(atoms=self)
-
+    @deprecate("Use get_symmetry()['equivalent_atoms'] instead")
     def analyse_phonopy_equivalent_atoms(self):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
-
-        # warnings.filterwarnings("ignore")
-        warnings.warn(
-            "analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead"
-        )
         return analyse_phonopy_equivalent_atoms(atoms=self)
 
     def plot3d(
@@ -1493,7 +1422,7 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
         )
 
-    @deprecate("use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors())",
+    @deprecate("Use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors())",
                version="1.0.0")
     def find_neighbors_by_vector(self, vector, return_deviation=False, num_neighbors=96):
         neighbors = self.get_neighbors(num_neighbors=num_neighbors)
@@ -1590,6 +1519,7 @@ class Atoms(ASEAtoms):
         return neighbors.get_bonds(radius=radius, max_shells=max_shells, prec=prec)
 
     # spglib calls
+    @deprecate_soon
     def get_symmetry(
         self, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
     ):
@@ -1627,6 +1557,7 @@ class Atoms(ASEAtoms):
                 angle_tolerance=angle_tolerance,
             )
 
+    @deprecate_soon
     def symmetrize_vectors(
         self, vectors, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
     ):
@@ -1663,6 +1594,7 @@ class Atoms(ASEAtoms):
         return np.einsum('ijk,ink->nj', self._symmetry_dataset['rotations'],
                          vectors[self._symmetry_dataset['indices']])/len(self._symmetry_dataset['rotations'])
 
+    @deprecate_soon
     def group_points_by_symmetry(self, points):
         """
             This function classifies the points into groups according to the box symmetry given by spglib.
@@ -1748,6 +1680,7 @@ class Atoms(ASEAtoms):
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
+    @deprecate_soon
     def get_equivalent_voronoi_vertices(
         self, return_box=False, minimum_dist=0.1, symprec=1e-5, angle_tolerance=-1.0
     ):
@@ -1776,6 +1709,7 @@ class Atoms(ASEAtoms):
         else:
             return list_positions
 
+    @deprecate_soon
     def get_equivalent_points(self, points, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1804,6 +1738,7 @@ class Atoms(ASEAtoms):
         x = np.einsum('ji,mj->mi', self.cell, x)
         return x
 
+    @deprecate_soon
     def get_symmetry_dataset(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1826,6 +1761,7 @@ class Atoms(ASEAtoms):
             angle_tolerance=angle_tolerance,
         )
 
+    @deprecate_soon
     def get_spacegroup(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1855,6 +1791,7 @@ class Atoms(ASEAtoms):
                 "Number": ast.literal_eval(space_group[1]),
             }
 
+    @deprecate_soon
     def refine_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1881,6 +1818,7 @@ class Atoms(ASEAtoms):
             symbols=list(self.get_chemical_symbols()), positions=coords, cell=cell, pbc=self.pbc
         )
 
+    @deprecate_soon
     def get_primitive_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1918,6 +1856,7 @@ class Atoms(ASEAtoms):
             red_structure.cell = amat_fcc
         return red_structure
 
+    @deprecate_soon
     def get_ir_reciprocal_mesh(
         self,
         mesh,
@@ -1972,18 +1911,10 @@ class Atoms(ASEAtoms):
         # TODO: implement
         pass
 
+    @deprecate("Use Atoms.analyse.pyscal_voronoi_volume() instead")
     def get_voronoi_volume(self):
-        """
-
-        Returns:
-
-        """
-        warnings.warn(
-            "This function doesn't account for periodic boundary conditions. Call "
-            "`analyse_pyscal_voronoi_volume` instead. This is what will now be returned.",
-            DeprecationWarning,
-        )
-        return self.analyse_pyscal_voronoi_volume()
+        return self._analyse.pyscal_voronoi_volume()
+    get_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
 
     def find_mic(self, v, vectors=True):
         """
