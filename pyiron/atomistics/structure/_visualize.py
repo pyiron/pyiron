@@ -534,7 +534,7 @@ def _ngl_write_structure(elements, positions, cell):
     from ase.geometry import cell_to_cellpar, cellpar_to_cell
     if cell is None or any(np.max(cell, axis=0) < 1e-2):
         # Define a dummy cell if it doesn't exist (eg. for clusters)
-        max_pos = np.max(positions, axis=0)
+        max_pos = np.max(positions, axis=0)-np.min(positions, axis=0)
         max_pos[np.abs(max_pos) < 1e-2] = 10
         cell = np.eye(3) * max_pos
     cellpar = cell_to_cellpar(cell)
