@@ -4,8 +4,7 @@
 
 from datetime import datetime
 import warnings
-from pyiron_base import GenericParameters, GenericJob, GenericMaster
-from pyiron_base.generic.util import deprecate
+from pyiron_base import GenericParameters, GenericJob, GenericMaster, deprecate
 from pyiron.atomistics.structure.atoms import ase_to_pyiron
 from pyiron.atomistics.structure.atoms import Atoms as PAtoms
 
