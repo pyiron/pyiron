@@ -2,7 +2,7 @@ channels:
 - conda-forge
 dependencies:
 - python
-- pyiron_atomistic
+- pyiron
 - pyiron_base
 - lammps
 - iprpy-data
@@ -13,6 +13,6 @@ dependencies:
 - seaborn
 - pyscal
 - jupyterlab
-- pyiron_atomistic-data >=0.0.5
+- pyiron-data >=0.0.5
 - sqsgenerator
 - pymatgen
