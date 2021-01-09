@@ -4,8 +4,7 @@
 
 from pyiron_atomistic.gpaw.pyiron_ase import AseJob
 from pyiron_atomistic.dft.job.generic import GenericDFTJob
-from pyiron_base import GenericParameters, Settings
-from pyiron_base.generic.util import ImportAlarm
+from pyiron_base import GenericParameters, Settings, ImportAlarm
 
 __author__ = "Jan Janssen"
 __copyright__ = (

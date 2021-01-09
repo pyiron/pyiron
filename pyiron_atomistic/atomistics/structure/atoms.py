@@ -20,8 +20,7 @@ from pyiron_atomistic.atomistics.structure.periodic_table import (
     PeriodicTable,
     ChemicalElement
 )
-from pyiron_base import Settings
-from pyiron_base import deprecate, deprecate_soon
+from pyiron_base import Settings, deprecate, deprecate_soon
 
 from scipy.spatial import cKDTree, Voronoi
 import spglib

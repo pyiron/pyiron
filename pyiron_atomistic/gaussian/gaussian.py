@@ -10,9 +10,8 @@ import numpy as np
 import matplotlib.pyplot as pt
 
 from pyiron_atomistic.dft.job.generic import GenericDFTJob
-from pyiron_base import GenericParameters
+from pyiron_base import GenericParameters, ImportAlarm
 from pyiron_atomistic.atomistics.structure.atoms import Atoms
-from pyiron_base.generic.util import ImportAlarm
 
 try:
     from molmod.io.fchk import FCHKFile
