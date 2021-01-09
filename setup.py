@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 import versioneer
 
 setup(
-    name='pyiron',
+    name='pyiron_atomistic',
     version=versioneer.get_version(),
     description='pyiron - an integrated development environment (IDE) for computational materials science.',
     long_description='http://pyiron.org',
