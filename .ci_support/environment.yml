@@ -1,4 +1,7 @@
 channels:
   - conda-forge
 dependencies:
+  - coveralls
+  - coverage
+  - codacy-coverage
   - pyiron_atomistics >= 0.2.0
