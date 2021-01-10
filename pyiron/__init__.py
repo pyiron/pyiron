@@ -12,9 +12,21 @@ create_ase_bulk = _StructureFactory.ase_bulk
 create_structure = _StructureFactory.crystal
 
 # Fix modules for backwards compatibility
-from pyiron_atomistics import \
-    atomistics, dft, gaussian, gpaw, interactive, lammps, quickff, \
-    sphinx, table, testing, thermodynamics, vasp, yaff, project
+import sys
+sys.modules["pyiron.atomistics"] = __import__(pyiron_atomistics.atomistics)
+sys.modules["pyiron.dft"] = __import__(pyiron_atomistics.dft)
+sys.modules["pyiron.gaussian"] = __import__(pyiron_atomistics.gaussian)
+sys.modules["pyiron.gpaw"] = __import__(pyiron_atomistics.gpaw)
+sys.modules["pyiron.interactive"] = __import__(pyiron_atomistics.interactive)
+sys.modules["pyiron.lammps"] = __import__(pyiron_atomistics.lammps)
+sys.modules["pyiron.quickff"] = __import__(pyiron_atomistics.quickff)
+sys.modules["pyiron.sphinx"] = __import__(pyiron_atomistics.sphinx)
+sys.modules["pyiron.table"] = __import__(pyiron_atomistics.table)
+sys.modules["pyiron.testing"] = __import__(pyiron_atomistics.testing)
+sys.modules["pyiron.thermodynamics"] = __import__(pyiron_atomistics.thermodynamics)
+sys.modules["pyiron.vasp"] = __import__(pyiron_atomistics.vasp)
+sys.modules["pyiron.yaff"] = __import__(pyiron_atomistics.yaff)
+sys.modules["pyiron.project"] = __import__(pyiron_atomistics.project)
 
 from ._version import get_versions
 
