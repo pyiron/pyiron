@@ -1,5 +1,0 @@
-waves { lcao{}; pawBasis; }
-rho { atomicOrbitals;
-atomicSpin { label = "spin_2"; spin = 2; }
-atomicSpin { label = "spin_2"; spin = 2; }
-}
