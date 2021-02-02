@@ -4,5 +4,4 @@ dependencies:
   - coveralls
   - coverage
   - codacy-coverage
-  - pyiron_atomistics =0.2.2
-  - numpy <1.20.0
+  - pyiron_atomistics =0.2.3
