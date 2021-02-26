@@ -13,6 +13,8 @@ create_structure = _StructureFactory.crystal
 
 # Fix modules for backwards compatibility
 import sys
+import pkgutil
+import importlib
 from pyiron_atomistics import \
     atomistics, dft, gaussian, gpaw, interactive, lammps, quickff, \
     sphinx, table, testing, thermodynamics, vasp, yaff, project
@@ -36,6 +38,11 @@ from ._version import get_versions
 __version__ = get_versions()["version"]
 del get_versions
 
+_ = [
+    importlib.import_module(name) 
+    for finder, name, ispkg in pkgutil.iter_modules() 
+    if name.startswith('pyiron_') and name not in ['pyiron_base', 'pyiron_atomistics']
+]
 
 def install():
     install_dialog()
