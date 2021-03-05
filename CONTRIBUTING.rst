@@ -204,12 +204,14 @@ The process described here has several goals:
 
 Please follow these steps to have your contribution considered by the maintainers:
 
-* Keep the changes in your pull request as focused as possible- only address one issue per pull request wherever possible.
+* Keep the changes in your pull request as focused as possible - only address one issue per pull request wherever possible.
 * Follow the `Styleguides`_
 * Assign the appropriate label (see `Issue and pull request labels`_) to your pull request. If you are fixing a specific Github issue, reference the issue directly in the pull request comments.
 * If you are aware which maintainer is most closely related to the code you've edited, feel free to request their review.
 * After you submit your pull request, verify that all status checks are passing.
 * If a status check fails and it seems to be unrelated to your changes, explain why the failure is unrelated as a comment in your pull request.
+* If you add a new external dependency, please check it is up to date. Packages which have not been updated for five years are considered outdated.
+* If you rename an existing python module, please open a separate pull request to simplify the review process. 
 
 While the prerequisites above must be satisfied prior to having your
 pull request reviewed, the reviewer(s) may ask you to complete
