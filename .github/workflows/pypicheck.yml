@@ -1,0 +1,31 @@
+ame: Pip check
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        python-version: [3.9]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: ${{ matrix.python-version }}
+        channel-priority: strict
+        environment-file: .ci_support/environment.yml
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+        python .ci_support/pyironconfig.py
+        pip install --no-deps .
+        pip check
