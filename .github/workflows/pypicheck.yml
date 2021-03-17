@@ -1,4 +1,4 @@
-ame: Pip check
+name: Pip check
 
 on:
   push:
