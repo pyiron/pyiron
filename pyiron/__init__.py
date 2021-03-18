@@ -16,21 +16,18 @@ import sys
 import pkgutil
 import importlib
 from pyiron_atomistics import \
-    atomistics, dft, gaussian, gpaw, interactive, lammps, quickff, \
-    sphinx, table, testing, thermodynamics, vasp, yaff, project
+    atomistics, dft, gpaw, interactive, lammps, sphinx, \
+    table, testing, thermodynamics, vasp, project
 sys.modules["pyiron.atomistics"] = atomistics
 sys.modules["pyiron.dft"] = dft
-sys.modules["pyiron.gaussian"] = gaussian
 sys.modules["pyiron.gpaw"] = gpaw
 sys.modules["pyiron.interactive"] = interactive
 sys.modules["pyiron.lammps"] = lammps
-sys.modules["pyiron.quickff"] = quickff
 sys.modules["pyiron.sphinx"] = sphinx
 sys.modules["pyiron.table"] = table
 sys.modules["pyiron.testing"] = testing
 sys.modules["pyiron.thermodynamics"] = thermodynamics
 sys.modules["pyiron.vasp"] = vasp
-sys.modules["pyiron.yaff"] = yaff
 sys.modules["pyiron.project"] = project
 
 from ._version import get_versions
