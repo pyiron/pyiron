@@ -24,7 +24,7 @@ pyiron - an integrated development environment (IDE) for computational materials
 
 • Feedback Loops – to construct dynamic simulation life cycles.
 
-• Hierarchical data management – interfacing with storage resources like SQL and `HDF5 <https://support.hdfgroup.org/HDF5/>`_.
+• Hierarchical data management – interfacing with storage resources like SQL and `HDF5 <https://portal.hdfgroup.org/display/HDF5/HDF5/>`_.
 
 • Integrated visualization – based on `NGLview <https://github.com/arose/nglview>`_.
 
