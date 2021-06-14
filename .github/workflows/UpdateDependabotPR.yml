@@ -1,0 +1,33 @@
+name: UpdateDependabotPR
+
+on:
+  pull_request_target:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: (github.actor == 'dependabot[bot]')
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }} # Check out the head of the actual branch, not the PR
+          fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+          token: ${{ secrets.DEPENDABOT_WORKFLOW_TOKEN }}
+      - name: UpdateEnvironmentFile
+        shell: bash -l {0}
+        run: |
+          package=$(echo "${{ github.event.pull_request.title }}" | awk '{print $2}')
+          from=$(echo "${{ github.event.pull_request.title }}" | awk '{print $4}')
+          to=$(echo "${{ github.event.pull_request.title }}" | awk '{print $6}')
+          sed -i "/${package}/s/${from}/${to}/g" .ci_support/environment.yml
+      - name: UpdateDependabotPR commit
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -m "[dependabot skip] Update environment" -a
+      - name: UpdateDependabotPR push
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.DEPENDABOT_WORKFLOW_TOKEN }}
+          branch: ${{ github.event.pull_request.head.ref }}
