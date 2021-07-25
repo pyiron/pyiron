@@ -1,0 +1,10 @@
+{
+  "tables": "pytables",
+  "pyiron-base": "pyiron_base",
+  "pyiron-atomistics": "pyiron_atomistics",
+  "pyiron-contrib": "pyiron_contrib",
+  "pyiron-experimental": "pyiron_experimental",
+  "pyiron-continuum": "pyiron_continuum",
+  "pyiron-gpl": "pyiron_gpl",
+  "pyiron-gui": "pyiron_gui"
+}

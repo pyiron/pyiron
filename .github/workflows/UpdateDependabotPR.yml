@@ -17,14 +17,11 @@ jobs:
       - name: UpdateEnvironmentFile
         shell: bash -l {0}
         run: |
-          package=$(echo "${{ github.event.pull_request.title }}" | awk '{print $2}')
-          from=$(echo "${{ github.event.pull_request.title }}" | awk '{print $4}')
-          to=$(echo "${{ github.event.pull_request.title }}" | awk '{print $6}')
-          sed -i "/${package}/s/${from}/${to}/g" .ci_support/environment.yml
+          python .ci_support/update_environment.py ${{ github.event.pull_request.title }}
       - name: UpdateDependabotPR commit
         run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email "pyiron@mpie.de"
+          git config --local user.name "pyiron-runner"
           git commit -m "[dependabot skip] Update environment" -a
       - name: UpdateDependabotPR push
         uses: ad-m/github-push-action@master
