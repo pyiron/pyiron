@@ -1,27 +1,27 @@
-cff-version: "1.1.0"
+cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors: 
-  - family-names: Janssen
-    given-names: Jan
-    orcid: "https://orcid.org/0000-0001-9948-7119"
-  - family-names: Surendralal
-    given-names: Sudarsan
-    orcid: "https://orcid.org/0000-0003-0362-7549"
-  - family-names: Lysogorskiy
-    given-names: Yury
-    orcid: "https://orcid.org/000-0003-4617-3188"
-  - family-names: Todorova
-    given-names: Mira
-    orcid: "https://orcid.org/0000-0002-8053-9350"
-  - family-names: Hickel
-    given-names: Tilmann
-    orcid: "https://orcid.org/0000-0003-0698-4891"
-  - family-names: Drautz
-    given-names: Ralf
-    orcid: "https://orcid.org/0000-0001-7101-8804"
-  - family-names: Neugebauer
-    given-names: Joerg
-    orcid: "https://orcid.org/0000-0002-7903-2472"
+- family-names: "Janssen"
+  given-names: "Jan"
+  orcid: "https://orcid.org/0000-0001-9948-7119"
+- family-names: "Surendralal"
+  given-names: "Sudarsan"
+  orcid: "https://orcid.org/0000-0003-0362-7549"
+- family-names: "Lysogorskiy"
+  given-names: "Yury"
+  orcid: "https://orcid.org/000-0003-4617-3188"
+- family-names: "Todorova"
+  given-names: "Mira"
+  orcid: "https://orcid.org/0000-0002-8053-9350"
+- family-names: "Hickel"
+  given-names: "Tilmann"
+  orcid: "https://orcid.org/0000-0003-0698-4891"
+- family-names: "Drautz"
+  given-names: "Ralf"
+  orcid: "https://orcid.org/0000-0001-7101-8804"
+- family-names: "Neugebauer"
+  given-names: "Joerg"
+  orcid: "https://orcid.org/0000-0002-7903-2472"
 title: "pyiron: An integrated development environment for computational materials science"
 doi: 10.1016/j.commatsci.2018.07.043
 date-released: 2019-06-01
