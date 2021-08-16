@@ -1,5 +1,3 @@
-# YAML 1.2
----
 authors: 
   -
     affiliation: "Max-Planck-Institut für Eisenforschung GmbH"
@@ -43,4 +41,3 @@ license: "BSD-3-Clause"
 message: "If you use this software, please cite it as below."
 repository-code: "http://github.com/pyiron"
 title: "pyiron: An integrated development environment for computational materials science"
-...
