@@ -1,43 +1,29 @@
+cff-version: "1.1.0"
+message: "If you use this software, please cite it as below."
 authors: 
-  -
-    affiliation: "Max-Planck-Institut für Eisenforschung GmbH"
-    family-names: Janssen
+  - family-names: Janssen
     given-names: Jan
     orcid: "https://orcid.org/0000-0001-9948-7119"
-  -
-    affiliation: "Max-Planck-Institut für Eisenforschung GmbH"
-    family-names: Surendralal
+  - family-names: Surendralal
     given-names: Sudarsan
     orcid: "https://orcid.org/0000-0003-0362-7549"
-  -
-    affiliation: "Atomistic Modelling and Simulation, ICAMS"
-    family-names: Lysogorskiy
+  - family-names: Lysogorskiy
     given-names: Yury
     orcid: "https://orcid.org/000-0003-4617-3188"
-  -
-    affiliation: "Max-Planck-Institut für Eisenforschung GmbH"
-    family-names: Todorova
+  - family-names: Todorova
     given-names: Mira
     orcid: "https://orcid.org/0000-0002-8053-9350"
-  -
-    affiliation: "Max-Planck-Institut für Eisenforschung GmbH"
-    family-names: Hickel
+  - family-names: Hickel
     given-names: Tilmann
     orcid: "https://orcid.org/0000-0003-0698-4891"
-  -
-    affiliation: "Atomistic Modelling and Simulation, ICAMS"
-    family-names: Drautz
+  - family-names: Drautz
     given-names: Ralf
     orcid: "https://orcid.org/0000-0001-7101-8804"
-  -
-    affiliation: "Max-Planck-Institut für Eisenforschung GmbH"
-    family-names: Neugebauer
+  - family-names: Neugebauer
     given-names: Joerg
     orcid: "https://orcid.org/0000-0002-7903-2472"
-cff-version: "1.1.0"
-date-released: 2019-06-01
-doi: "https://doi.org/10.1016/j.commatsci.2018.07.043"
-license: "BSD-3-Clause"
-message: "If you use this software, please cite it as below."
-repository-code: "http://github.com/pyiron"
 title: "pyiron: An integrated development environment for computational materials science"
+doi: 10.1016/j.commatsci.2018.07.043
+date-released: 2019-06-01
+license: "BSD-3-Clause"
+url: "http://github.com/pyiron"
