@@ -23,6 +23,7 @@ authors:
   given-names: "Joerg"
   orcid: "https://orcid.org/0000-0002-7903-2472"
 title: "pyiron: An integrated development environment for computational materials science"
+version: 0.1.8
 doi: 10.1016/j.commatsci.2018.07.043
 date-released: 2019-06-01
 license: "BSD-3-Clause"
