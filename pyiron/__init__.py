@@ -35,11 +35,26 @@ from ._version import get_versions
 __version__ = get_versions()["version"]
 del get_versions
 
-_ = [
+_pyiron_modules = [
     importlib.import_module(name) 
     for finder, name, ispkg in pkgutil.iter_modules() 
     if name.startswith('pyiron_') and name not in ['pyiron_base', 'pyiron_atomistics']
 ]
+
+__pyiron_versions__ = {'pyiron': __version__}
+for pyiron_module in _pyiron_modules:
+    name = pyiron_module.__name__
+    try:
+        version = pyiron_module.__version__
+    except AttributeError:
+        version = "unknown"
+    __pyiron_versions__[name] = version
+
+del _pyiron_modules
+
+def get_pyiron_versions():
+    return __pyiron_versions__
+
 
 def install():
     install_dialog()
