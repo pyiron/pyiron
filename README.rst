@@ -44,6 +44,11 @@ pyiron - an integrated development environment (IDE) for computational materials
 pyiron (called pyron) is developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Institut für Eisenforschung (Max Planck Institute for iron research) <https://www.mpie.de/2281/en>`_. While its original focus was to provide a framework to develop and run complex simulation protocols as needed for ab initio thermodynamics it quickly evolved into a versatile tool to manage a wide variety of simulation tasks. In 2016 the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ joined the development of the framework with a specific focus on high throughput applications. In 2018 pyiron was released as open-source project.
 See the `Documentation <http://pyiron.org>`_ page for more details.
 
+.. note::
+   **pyiron**: This is the documentation page for the pyiron meta package, that combines the other packages in a common
+   interface.  The API documentation for `pyiron_base <https://pyiron_base.readthedocs.io/en/latest/>`_ and
+   `pyiron_atomistics <https://pyiron_atomistics.readthedocs.io/en/latest/>`_ are available as separate pages.
+
 
 Installation
 ------------
