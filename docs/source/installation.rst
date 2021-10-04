@@ -179,6 +179,16 @@ The resource directory contains two sub folders :code:`bin` which includes links
     #!/bin/bash
     mpiexec -n $1 --oversubscribe lmp_mpi -in control.inp;
 
+If you are running on a cluster with a module system like `this one <http://modules.sourceforge.net/>`_ and may be a
+good idea configure a clean environment that your job can run, e.g.
+
+.. code-block:: bash
+
+   #!/bin/bash
+   module purge
+   module load lammps/29Oct20
+   mpiexec -n $1 --oversubscribe lmp_mpi -in control.inp;
+
 Scripts with the :code:`mpi` tag are called with two parameters the first being the number of cores the second the number of threads, while regular shell scripts do not get any input parameters. By using shell scripts it is easy to link existing executables which might require loading specific modules or setting environment variables. In the same way the parameter files for pyiron are stored in the csv format which makes them human editable. For shared installations we recommend storing the pyiron resources in a shared directory. 
 
 Configure VASP
