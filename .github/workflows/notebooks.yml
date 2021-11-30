@@ -22,7 +22,7 @@ jobs:
         awk 'NR>3{ print $0 }' .ci_support/environment-notebooks.yml >> .ci_support/environment.yml
     - uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: 3.9
+        python-version: "3.10"
         mamba-version: "*"
         channels: conda-forge
         channel-priority: strict
