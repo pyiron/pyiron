@@ -10,7 +10,9 @@ def main():
         with open(pyiron_config, 'w') as f:
             f.writelines(['[DEFAULT]\n',
                           'TOP_LEVEL_DIRS = ' + top_level_path + '\n',
-                          'RESOURCE_PATHS = ' + resource_path + '\n'])
+                          'RESOURCE_PATHS = ' + resource_path + '\n',
+                         'DATABASE_FILE = ' + resource_path + '/pyiron.db\n',
+                         ])
     else:
         print('config exists')
 
