@@ -18,7 +18,7 @@ formats: all
 
 # Install pyiron from conda 
 conda:
-  environment: .ci_support/environment.yml
+  environment: .ci_support/environment-docs.yml
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
