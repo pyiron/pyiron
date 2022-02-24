@@ -23,12 +23,13 @@ setup(
                  'Programming Language :: Python :: 3.6',
                  'Programming Language :: Python :: 3.7',
                  'Programming Language :: Python :: 3.8',
-                 'Programming Language :: Python :: 3.9'],
+                 'Programming Language :: Python :: 3.9',
+                 'Programming Language :: Python :: 3.10'],
 
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*", "*docs*", "*binder*", "*conda*", "*notebooks*", "*.ci_support*"]),
     install_requires=[
-        'pyiron_atomistics==0.2.37'
+        'pyiron_atomistics==0.2.38'
     ],
     cmdclass=versioneer.get_cmdclass(),
 
