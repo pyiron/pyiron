@@ -356,7 +356,7 @@ The tag format consists of a tag_prefix (<package name>-) and the release versio
   The configuration of the release is included in the setup.ctg file (https://github.com/pyiron/pyiron/blob/master/setup.cfg).
   This Workflow first installs all dependencies, then allows for future versions of the dependencies and builds the package. After that the package is published to `pip`_.
 3. Automatically create conda-forge package
-  This release than is recognized by a conda-forge bot, which triggers a new pull request for the conda-forge package and merges automatically if all tests pass.
+  This release than is recognized by a [conda-forge bot](https://github.com/pyiron/pyiron/blob/update_contribution_guidelines/.github/workflows/UpdateDependabotPR.yml), which triggers a new pull request for the conda-forge package and merges automatically if all tests pass.
   These tests are defined as `GitHub-Action-Workflows`_ and are triggered for every new pull request. More information can be found in the next chapter.
 4. Docker images
   The docker images are maintained manually and therefore not updated with every release. The docker images are build using hte conda packages and can be found in different variants under https://github.com/pyiron/docker-stacks
