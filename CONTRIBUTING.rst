@@ -47,7 +47,9 @@ Table of Contents
 `Additional Notes`_
   * `Issue and pull request labels`_
   * `Build status`_
-  * `pyiron releases`_
+  * `Pyiron release distribution`_
+  * `Building process for a release`_
+  * `GitHub Workflows`_
   
 `Debugging`_
   * `My job does not run on the queue`_
@@ -322,69 +324,81 @@ The build status for pyiron and all sub packages are given below
     :target: https://ci.appveyor.com/project/pyiron-runner/pyiron/branch/master
     :alt: Build status
 
-pyiron releases
----------------
+pyiron release distribution
+---------------------------
 
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/downloads.svg
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Downloads
 
-For the pyiron release management we use git tags::
-
-   https://git-scm.com/book/en/v2/Git-Basics-Tagging
-
-The tag format consists of a tag_prefix (<package name>-) and the release version, for example::
-
-   pyiron-0.2.0
-
-For the automated versioning we use::
-
-   https://github.com/warner/python-versioneer/
-
-So the configuration of the release is included in setup.cfg::
-
-   https://github.com/pyiron/pyiron_base/blob/master/setup.cfg
-
-As the pyiron packages are pure python packages – we use only the Linux Python 3.7 job to build the packages, as defined in the .travis.yml file::
-
-   https://github.com/pyiron/pyiron_base/blob/master/.travis.yml
-
-The python 3.7 linux tests therefore takes more time, compared to the other tests on travis.
-
-Just like each other commit to the master branch the tagged releases are pushed to pypi.org and anaconda.org::
-
-   https://pypi.org/project/pyiron-base/#history
-   https://anaconda.org/pyiron/pyiron_base
-
-The major difference for pypi (pip) is that tagged releases are the default for pip while installing prerelease versions using pip requires the `--pre` flag.
-`pip install --pre pyiron`
-
-Those pre-release versions are named `<version_number>.post0.dev<release number>` ::
-
-   0.2.0.post0.dev1
-
-For anaconda the prereleases are pushed to the pyiron channel and can be installed using:
-conda install -c pyiron pyiron
-
-On the other hand the tagged releases are available through conda-forge, as soon as the corresponding packages are merged::
-
-   https://github.com/conda-forge/pyiron-feedstock
+Pyiron is released through `conda-forge`_ and  `pip`_. 
+Both packages are created automatically and maintained with every new release of pyiron. In order to use these distributions simply use the following command for conda::
    conda install -c conda-forge pyiron
+In order to use the pip distribution use::
+   pip install pyiron
+Just like each other commit to the master branch the tagged releases are pushed to pypi.org (https://pypi.org/project/pyiron/#history)::
+The major difference for pypi (pip) is that installing pre-release versions is possible using the `--pre` flag::
+   pip install --pre pyiron
+Those pre-release versions are named `<version_number>.post0.dev<release number>` ::
+   0.2.0.post0.dev1
+For pip both the pre-releases as well as the official releases are available. For conda only the official releases are available.
 
-So for both conda and pip both the prereleases as well as the official releases are available.
+Building process for a release
+---------------------------------
+1. Create a Git tag to mark the release
+This step is done manually and important to trigger all the following steps. Tag can be created under https://github.com/pyiron/pyiron/tags. 
+The following steps are automated and will be performed once a tag is created. 
+In order to keep the tags consistent please follow the `Git-Tag-Guide`_.
+The tag format consists of a tag_prefix (<package name>-) and the release version, for example::
+     pyiron-0.2.0
+2. Automatically create PyPi package
+  After the tag is created, the `Deploy-Workflow`_ is triggered, which creates the PyPi Package.
+  The configuration of the release is included in the setup.ctg file (https://github.com/pyiron/pyiron/blob/master/setup.cfg).
+  This Workflow first installs all dependencies, then allows for future versions of the dependencies and builds the package. After that the package is published to `pip`_.
+3. Automatically create conda-forge package
+  This release than is recognized by a conda-forge bot, which triggers a new pull request for the conda-forge package and merges automatically if all tests pass.
+  These tests are defined as `GitHub-Action-Workflows`_ and are triggered for every new pull request. More information can be found in the next chapter.
+4. Docker images
+  The docker images are maintained manually and therefore not updated with every release. The docker images are build using hte conda packages and can be found in different variants under https://github.com/pyiron/docker-stacks
+5. Graphical installer
+  The graphical installer is also maintained manually and not updated as frequently and can be found at https://github.com/pyiron/pyiron-installer.
 
-.. _Max Planck Institut für Eisenforschung: https://mpie.de
-.. _github page: https://github.com/pyiron
-.. _issues page: https://github.com/pyiron/pyiron/issues
-.. _FAQ page: https://pyiron.readthedocs.io/en/latest/source/faq.html
-.. _bugs: https://github.com/pyiron/pyiron/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug%22
-.. _Good first issues: https://github.com/pyiron/pyiron/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22
-.. _Help wanted issues: https://github.com/pyiron/pyiron/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
-.. _PEP8 conventions: https://www.python.org/dev/peps/pep-0008/
-.. _Codacy: https://www.codacy.com/
-.. _Coveralls: https://coveralls.io/
-.. _Google Python Docstring format: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
-.. _Sphinx: https://www.sphinx-doc.org/en/master/
+GitHub Workflows
+-----------------------------
+The `GitHub-Action-Workflows`_ are triggered at different occasions (eg. creating commit, push to master):
+* UpdateDependabotPR.yml: https://github.com/pyiron/pyiron/blob/master/.github/workflows/UpdateDependabotPR.yml
+* codeql-analysis.yml: https://github.com/pyiron/pyiron/blob/master/.github/workflows/codeql-analysis.yml
+* deploy.yml: https://github.com/pyiron/pyiron/blob/master/.github/workflows/deploy.yml
+* docs.yml: https://github.com/pyiron/pyiron/blob/master/.github/workflows/docs.yml
+* notebooks.yml: https://github.com/pyiron/pyiron_base/blob/master/.github/workflows/notebooks.yml
+* pypicheck.yml: https://github.com/pyiron/pyiron_base/blob/master/.github/workflows/pypicheck.yml
+
+**codeql-analysis.yml**
+This workflow is used to find vulnerablities inside the codebase with CodeQL.
+First, the head of the branch is retvieved and CodeQL is initialized.
+After that, the CodeQL analysis is performed and the results are returned.
+
+**deploy.yml**
+This workflow is used to upload and deploy a new release to PyPi. 
+First, the install dependencies in order to create the PyPi distribution.
+After that, the version restriction of the dependencies are lifted to allow for future versions and the PyPi package is build according to the setup.py
+This release is then uploaded to PyPi, but only if it is tagged correctly.
+
+**docs.yml*
+This workflow is used to test, if the documentation can build.
+First, the environment is setup and a conda environment is created based on ./.ci_support/environment-docs.yml.
+After that, the documentation folder is created and the documentation is build with sphinx.
+
+**notebooks.yml**
+This workflow is used to test, if the code is compatible with jupyter notebooks found in in the [notebooks folder](https://github.com/pyiron/pyiron_base/tree/master/notebooks).
+First, the environment is setup and a conda environment is created based on ./.ci_support/environment-notebooks.yml.
+After that, the script ./.ci_support/build_notebooks.sh is executed, which tests if the notebooks can be executed.
+
+**pypicheck.yml**
+This workflow is used to test, if the installation of the pypi package works.
+First, the environment is setup and the installation is run.
+After that, pip check is run, to verify if the packages installed based on the environment.yml have compatible dependencies.
+
 
 Debugging
 ================
@@ -426,7 +440,7 @@ Make sure that the ``__init__.py`` of your module (here, ``pyiron_contrib``) ini
 .. code-block::
 
   from pyiron import Project
-  from pyiron.base.job.jobtype import JOB_CLASS_DICT
+  from pyiron_base.job.jobtype import JOB_CLASS_DICT
 
   # Make classes available for new pyiron version
   JOB_CLASS_DICT['ProtoMD'] = 'pyiron_contrib.protocol.compound.md'  # the path of your job class
