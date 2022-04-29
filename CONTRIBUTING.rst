@@ -17,7 +17,7 @@ Wait I don't want to read this; I just have a quick question/bugfix!
 
 1. Check out our `FAQ page`_; your question might already be answered there.
 2. If your question relates to a bug in pyiron, please briefly search the `issues page`_ and open a new labeled issue if you don't see anything related to your question there.
-3. Please feel free just to send one of us a brief, descriptive email with your question, and we'll do our best to get back to you as ASAP as possible.
+3. Please feel free just to send one of us a brief, descriptive email with your question, and we'll do our best to get back to you ASAP.
 
 Table of Contents
 =================
