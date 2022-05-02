@@ -345,6 +345,7 @@ For pip both the pre-releases as well as the official releases are available. Fo
 
 Building process for a release
 ---------------------------------
+Check if all tests as explained in the next chapter have passed
 1. Create a Git tag to mark the release
 This step is done manually and important to trigger all the following steps. Tag can be created under https://github.com/pyiron/pyiron/tags. 
 The following steps are automated and will be performed once a tag is created. 
@@ -357,7 +358,6 @@ The tag format consists of a tag_prefix (<package name>-) and the release versio
   This Workflow first installs all dependencies, then allows for future versions of the dependencies and builds the package. After that the package is published to `pip`_.
 3. Automatically create conda-forge package
   This release than is recognized by a conda-forge bot, which triggers a new pull request for the conda-forge package and merges automatically if all tests pass.
-  Check if all tests as explained in the next chapter have passed
 4. Docker images
   The docker images are maintained manually and therefore not updated with every release. The docker images are build using the conda packages and can be found in different variants under https://github.com/pyiron/docker-stacks
 5. Graphical installer
