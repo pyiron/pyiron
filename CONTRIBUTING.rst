@@ -429,7 +429,7 @@ Make sure that the ``__init__.py`` of your module (here, ``pyiron_contrib``) ini
   from pyiron.base.job.jobtype import JOB_CLASS_DICT
 
   # Make classes available for new pyiron version
-  JOB_CLASS_DICT['ProtoMD'] = 'pyiron_contrib.protocol.compound.md'  # the path of your job class
+  JOB_CLASS_DICT["ProtoMD"] = "yiron_contrib.protocol.compound.md"  # the path of your job class
   
   
 **3. Confirm that the job class can be instantiatied**
@@ -438,7 +438,7 @@ Create a new job, but instead of running it, save it:
 
 .. code-block::
 
-  job = pr.create_job(job_type = pr.job_type.ProtoMD, job_name = 'job')
+  job = pr.create.job.ProtoMD("job")
   ...  # input parameters that the job requires
   ...
   job.save()
