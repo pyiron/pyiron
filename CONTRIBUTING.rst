@@ -419,7 +419,7 @@ This should output:
 If you see your job class in the list, proceed to step 3. If not, 
 
 
-**2. Check if the job class in initialized in ``__init__.py`` of the module**
+**2. Check if the job class is initialized in ``__init__.py`` of the module**
 
 Make sure that the ``__init__.py`` of your module (here, ``pyiron_contrib``) initializes the job class in the following format:
 
