@@ -17,7 +17,7 @@ Wait I don't want to read this; I just have a quick question/bugfix!
 
 1. Check out our `FAQ page`_; your question might already be answered there.
 2. If your question relates to a bug in pyiron, please briefly search the `issues page`_ and open a new labeled issue if you don't see anything related to your question there.
-3. You can also contact us on stackoverflow with the tag 'pyiron'. There we will answer your questions.
+3. You can also contact us on stackoverflow with the tag 'pyiron'. There we will answer your questions. For bug fixes, please open an issue on github, as mentioned before.
 
 Table of Contents
 =================
