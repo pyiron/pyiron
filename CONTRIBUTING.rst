@@ -72,7 +72,7 @@ pyiron developer meetings
 -------------------------
 If you are interested in discussing pyiron's development, we encourage you to virtually
 participate in the pyiron developer meeting Mondays at 15:00 german time (GMT+2).
-Check the discussion page for details.
+Contact us if you want to participate in the weekly virtual pyiron developer meeting and check the discussion page for details.
 
 How can I contribute?
 =====================
