@@ -72,7 +72,7 @@ pyiron developer meetings
 -------------------------
 If you are interested in discussing pyiron's development, we encourage you to virtually
 participate in the pyiron developer meeting Mondays at 15:00 german time (GMT+2).
-Contact us if you want to participate in the weekly virtual pyiron developer meeting and check the discussion page for details.
+Contact us if you want to participate in the weekly virtual pyiron developer meeting, become part of the pyiron organization, and check the discussion page for details.
 
 How can I contribute?
 =====================
@@ -184,7 +184,7 @@ sometimes nice to run all or only specific tests on your machine.  To do that ru
 
 Where the first line runs all tests, the second all the sphinx tests and the final line only the tests in that file.
 Keep in mind that to run the tests your repository needs to be inside your pyiron project folder and you need to have 
-at least the basic resources installed from ``tests/static``.  A neat trick when testing/debugging is to combine the 
+at least the basic resources installed from `tests/static`.  A neat trick when testing/debugging is to combine the 
 pdb and unittest modules like this
 
 .. code-block::
@@ -357,9 +357,9 @@ The tag format consists of a tag_prefix (<package name>-) and the release versio
   This Workflow first installs all dependencies, then allows for future versions of the dependencies and builds the package. After that the package is published to `pip`_.
 3. Automatically create conda-forge package
   This release than is recognized by a conda-forge bot, which triggers a new pull request for the conda-forge package and merges automatically if all tests pass.
-  These tests are defined as `GitHub-Action-Workflows`_ and are triggered for every new pull request. More information can be found in the next chapter.
+  Check if all tests as explained in the next chapter have passed
 4. Docker images
-  The docker images are maintained manually and therefore not updated with every release. The docker images are build using hte conda packages and can be found in different variants under https://github.com/pyiron/docker-stacks
+  The docker images are maintained manually and therefore not updated with every release. The docker images are build using the conda packages and can be found in different variants under https://github.com/pyiron/docker-stacks
 5. Graphical installer
   The graphical installer is also maintained manually and not updated as frequently and can be found at https://github.com/pyiron/pyiron-installer.
 
@@ -400,7 +400,7 @@ First, the install dependencies in order to create the PyPi distribution.
 After that, the version restriction of the dependencies are lifted to allow for future versions and the PyPi package is build according to the setup.py
 This release is then uploaded to PyPi, but only if it is tagged correctly.
 
-**docs.yml*
+**docs.yml**
 
 This workflow is used to test, if the documentation can build.
 First, the environment is setup and a conda environment is created based on ./.ci_support/environment-docs.yml.
@@ -428,7 +428,7 @@ In case a job runs properly while executing it locally (or on the head node), bu
 
 **1. Check if the job class is available in the project:**
 
-In this example, we want a custom job class ``ProtoMD`` from the module ``pyiron_contrib``:
+In this example, we want a custom job class `ProtoMD` from the module `pyiron_contrib`:
 
 .. code-block::
 
@@ -452,9 +452,9 @@ This should output:
 If you see your job class in the list, proceed to step 3. If not, 
 
 
-**2. Check if the job class is initialized in ``__init__.py`` of the module**
+**2. Check if the job class is initialized in `__init__.py` of the module**
 
-Make sure that the ``__init__.py`` of your module (here, ``pyiron_contrib``) initializes the job class in the following format:
+Make sure that the `__init__.py` of your module (here, `pyiron_contrib`) initializes the job class in the following format:
 
 .. code-block::
 
@@ -496,7 +496,7 @@ Now we know that the job class is indeed available in the project and can be ins
 
 Submitting and running a job on the queue, is essentially the same as saving a job in one notebook, but loading and executing it in another notebook.
 
-In **a new notebook** , load the job that you just saved, using its job id. You may or may not import the module (here, ``pyiron_conntirb``):
+In **a new notebook** , load the job that you just saved, using its job id. You may or may not import the module (here, `pyiron_conntirb`):
 
 .. code-block::
 
