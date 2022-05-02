@@ -496,7 +496,7 @@ Now we know that the job class is indeed available in the project and can be ins
 
 Submitting and running a job on the queue, is essentially the same as saving a job in one notebook, but loading and executing it in another notebook.
 
-In **a new notebook** , load the job that you just saved, using its job id. You may or may not import the module (here, `pyiron_conntirb`):
+In **a new notebook** , load the job that you just saved, using its job id. You may or may not import the module (here, `pyiron_contrib`):
 
 .. code-block::
 
