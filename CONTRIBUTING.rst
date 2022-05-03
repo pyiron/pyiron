@@ -526,7 +526,6 @@ If the job loads and runs properly, the job should also run properly on the queu
 .. _Git-Tag-Guide: https://git-scm.com/book/en/v2/Git-Basics-Tagging
 .. _Deploy-Workflow: https://github.com/pyiron/pyiron_base/blob/master/.github/workflows/deploy.yml
 .. _GitHub-Action-Workflows: https://github.com/pyiron/pyiron_base/tree/master/.github/workflows
-.. _Black style: https://black.readthedocs.io/en/stable/
 .. _dependabot: https://github.com/dependabot
 .. _setup.ctg file: https://github.com/pyiron/pyiron/blob/master/setup.cfg
 .. _notebooks folder: https://github.com/pyiron/pyiron_base/tree/master/notebooks
