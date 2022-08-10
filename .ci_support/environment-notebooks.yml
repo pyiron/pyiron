@@ -3,13 +3,12 @@ channels:
 dependencies:
 - gpaw >=20
 - jupyter
-- lammps
+- lammps >= 2021.05.27
 - nglview
 - papermill
 - seaborn
-- sphinxdft >=2.7.0
+- sphinxdft >=3.0
 - sphinxdft-data
 - iprpy-data
-- pyiron-data >=0.0.12
-- pymatgen
+- pyiron-data >=0.0.14
 - sqsgenerator
