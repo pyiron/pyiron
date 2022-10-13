@@ -5,3 +5,4 @@ dependencies:
 - coverage
 - codacy-coverage
 - pyiron_atomistics =0.2.57
+- ipywidgets <8  # conflict with NGLview
