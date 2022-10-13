@@ -4,4 +4,5 @@ dependencies:
 - coveralls
 - coverage
 - codacy-coverage
-- pyiron_atomistics =0.2.51
+- pyiron_atomistics =0.2.57
+- phonopy <2.16  # There is a bug with the latest phonopy version https://github.com/pyiron/pyiron_atomistics/pull/803
