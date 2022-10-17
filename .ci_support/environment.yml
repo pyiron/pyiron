@@ -5,4 +5,3 @@ dependencies:
 - coverage
 - codacy-coverage
 - pyiron_atomistics =0.2.58
-- phonopy <2.16
