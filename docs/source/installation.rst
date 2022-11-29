@@ -160,7 +160,7 @@ To add your own executables or parameter files it is necessary to initialise a u
     PROJECT_PATHS = ~/pyiron/projects
     RESOURCE_PATHS = ~/pyiron/resources
     
-In this case pyiron can only execute calculations in the :code:`~/pyiron/projects` directory. pyiron can’t delete files outside this directory. Next to the projects directory :code:`~/pyiron/projects` we create a resource directory :code:`~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no :code:`FILE` option is defined pyiron by default creates an `SQLite <https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github <https://github.com/pyiron/pyiron-resources/tree/master>`_ . Here we just discuss the LAMMPS resource directory as one example.
+In this case pyiron can only execute calculations in the :code:`~/pyiron/projects` directory. pyiron can’t delete files outside this directory. Next to the projects directory :code:`~/pyiron/projects` we create a resource directory :code:`~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no :code:`FILE` option is defined pyiron by default creates an `SQLite <https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github <https://github.com/pyiron/pyiron-resources/tree/main>`_ . Here we just discuss the LAMMPS resource directory as one example.
 
 .. code-block:: bash
 
@@ -193,7 +193,7 @@ Scripts with the :code:`mpi` tag are called with two parameters the first being 
 
 Configure VASP
 --------------
-The `Vienna Ab initio Simulation Package <https://www.vasp.at>`_ is a popular commercial DFT code which is commonly used for large DFT calculations or high-throughput studies. pyiron implements a VASP wrapper but does not provide a VASP license. Therefore users have to compile their own VASP executable and provide their own VASP pseudopotentials (included with the VASP license). An example configuration for VASP in pyiron is available on `Github <https://github.com/pyiron/pyiron-resources/tree/master/vasp>`_: 
+The `Vienna Ab initio Simulation Package <https://www.vasp.at>`_ is a popular commercial DFT code which is commonly used for large DFT calculations or high-throughput studies. pyiron implements a VASP wrapper but does not provide a VASP license. Therefore users have to compile their own VASP executable and provide their own VASP pseudopotentials (included with the VASP license). An example configuration for VASP in pyiron is available on `Github <https://github.com/pyiron/pyiron-resources/tree/main/vasp>`_:
 
 .. code-block:: bash
 
@@ -257,7 +257,7 @@ We start by explaining the first configuration and then build on top of this set
 
 HPC Cluster with PostgreSQL Database and Jupyterhub
 ---------------------------------------------------
-The :code:`~/.pyiron` is structured just like a workstation installation with a `PostgreSQL <https://www.postgresql.org>`_ database as explained above. In addition to the previous resource directories we add another subfolder in the resource directory to configure the queuing system using `pysqa <https://github.com/pyiron/pysqa>`_ as queuing system adapter. `pysqa <https://github.com/pyiron/pysqa>`_ is based on the idea of using shell script based templates to configure the different queues as modern queuing sytem provide a wide range of settings but most users commonly submit their jobs with very similar settings. We discuss a sample configuration for `SLURM <https://slurm.schedmd.com/documentation.html>`_ sample configurations for other queuing systems are available on `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
+The :code:`~/.pyiron` is structured just like a workstation installation with a `PostgreSQL <https://www.postgresql.org>`_ database as explained above. In addition to the previous resource directories we add another subfolder in the resource directory to configure the queuing system using `pysqa <https://github.com/pyiron/pysqa>`_ as queuing system adapter. `pysqa <https://github.com/pyiron/pysqa>`_ is based on the idea of using shell script based templates to configure the different queues as modern queuing sytem provide a wide range of settings but most users commonly submit their jobs with very similar settings. We discuss a sample configuration for `SLURM <https://slurm.schedmd.com/documentation.html>`_ sample configurations for other queuing systems are available on `Github <https://github.com/pyiron/pysqa/tree/main/tests/config>`_.
 
 .. code-block:: bash
 
@@ -299,7 +299,7 @@ Besides the queue templates, the queues directory also contains the queue config
       queue_one: {cores_max: 40, cores_min: 1, run_time_max: 3600, script: queue_1.sh}
       queue_two: {cores_max: 1200, cores_min: 40, run_time_max: 345600, script: queue_2.sh}
 
-The queue configuration defines the limits of the individual queues which helps the user to select the appropriate queue for their simulation. The :code:`queue_type` defines the type of the queuing system, the :code:`queue_primary` defines the primary queue and finally :code:`queues` defines the available queues. Typically each queue is associated with a shell script template, like in this case :code:`queue_one` is associated with :code:`queue_1.sh` and :code:`queue_two` is associated with :code:`queue_2.sh`. Additional queue configuration templates are available on `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
+The queue configuration defines the limits of the individual queues which helps the user to select the appropriate queue for their simulation. The :code:`queue_type` defines the type of the queuing system, the :code:`queue_primary` defines the primary queue and finally :code:`queues` defines the available queues. Typically each queue is associated with a shell script template, like in this case :code:`queue_one` is associated with :code:`queue_1.sh` and :code:`queue_two` is associated with :code:`queue_2.sh`. Additional queue configuration templates are available on `Github <https://github.com/pyiron/pysqa/tree/main/tests/config>`_.
 
 Submit to Remote HPC
 --------------------
@@ -362,7 +362,7 @@ So far we discussed the installation of pyiron on an individual workstation via 
 
 Install from Source 
 ===================
-For development, it is recommended to first create a conda environment containing all of pyiron's dependencies. The dependencies are available in pyiron's `environment.yml <https://github.com/pyiron/pyiron/blob/master/.ci_support/environment.yml>`_ file.
+For development, it is recommended to first create a conda environment containing all of pyiron's dependencies. The dependencies are available in pyiron's `environment.yml <https://github.com/pyiron/pyiron/blob/main/.ci_support/environment.yml>`_ file.
 
 .. code-block:: bash
     git clone https://github.com/pyiron/pyiron.git
@@ -411,7 +411,7 @@ When you import pyiron in any python shell or jupyter notebook it should load th
 
 .. code-block:: bash
 
-    git checkout -b master
+    git checkout -b main
 
 In this case we switch to the master branch.  
 
@@ -442,7 +442,7 @@ For workshops, tutorials, and lectures it is sometimes necessary to setup multip
 
 Cloud Solutions
 ===============
-You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/master?urlpath=lab>`_, without the need for a local installation. It is a flexible way to get a first impression of pyiron but it does not provide any permanent storage by default. Loading the pyiron environment on mybinder can take 5 to 15 minutes in case a new docker container needs to be built. Mybinder is a free service, so sessions on its servers are limited in duration and memory limits, and their stability is not guaranteed. We recommend having a backup plan when using mybinder for presentations/interactive tutorials, since the mybinder instance might be shutdown if it is idle for too long. 
+You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/main?urlpath=lab>`_, without the need for a local installation. It is a flexible way to get a first impression of pyiron but it does not provide any permanent storage by default. Loading the pyiron environment on mybinder can take 5 to 15 minutes in case a new docker container needs to be built. Mybinder is a free service, so sessions on its servers are limited in duration and memory limits, and their stability is not guaranteed. We recommend having a backup plan when using mybinder for presentations/interactive tutorials, since the mybinder instance might be shutdown if it is idle for too long.
 
 Docker Container
 ================
@@ -479,7 +479,7 @@ To setup a local lab with pyiron when the internet connection is limited, we pro
 ***************
 Getting Started
 ***************
-Finally once you have installed pyiron you can quickly test your installation with the following minimalistic example. Many more examples are available in the `Github repository <https://github.com/pyiron/pyiron/tree/master/notebooks>`_.
+Finally once you have installed pyiron you can quickly test your installation with the following minimalistic example. Many more examples are available in the `Github repository <https://github.com/pyiron/pyiron/tree/main/notebooks>`_.
 
 First Calculation
 =================
