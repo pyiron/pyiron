@@ -304,8 +304,8 @@ Build status
 
 The build status for pyiron and all sub packages are given below
 
-.. image:: https://coveralls.io/repos/github/pyiron/pyiron/badge.svg?branch=master
-    :target: https://coveralls.io/github/pyiron/pyiron?branch=master
+.. image:: https://coveralls.io/repos/github/pyiron/pyiron/badge.svg?branch=main
+    :target: https://coveralls.io/github/pyiron/pyiron?branch=main
     :alt: Coverage Status
 
 .. image:: https://api.codacy.com/project/badge/Grade/c513254f10004df5a1f5c76425c6584b
@@ -316,12 +316,12 @@ The build status for pyiron and all sub packages are given below
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Release_Date
 
-.. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=master
+.. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=main
     :target: https://travis-ci.org/pyiron/pyiron
     :alt: Build Status
 
-.. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/pyiron-runner/pyiron/branch/master
+.. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq/branch/main?svg=true
+    :target: https://ci.appveyor.com/project/pyiron-runner/pyiron/branch/main
     :alt: Build status
 
 pyiron release distribution
@@ -367,17 +367,17 @@ GitHub Workflows
 -----------------------------
 The `GitHub-Action-Workflows`_ are triggered at different occasions (eg. creating commit, push to master):
 
-* UpdateDependabotPR.yml: https://github.com/pyiron/pyiron/blob/master/.github/workflows/UpdateDependabotPR.yml
+* UpdateDependabotPR.yml: https://github.com/pyiron/pyiron/blob/main/.github/workflows/UpdateDependabotPR.yml
 
-* codeql-analysis.yml: https://github.com/pyiron/pyiron/blob/master/.github/workflows/codeql-analysis.yml
+* codeql-analysis.yml: https://github.com/pyiron/pyiron/blob/main/.github/workflows/codeql-analysis.yml
 
-* deploy.yml: https://github.com/pyiron/pyiron/blob/master/.github/workflows/deploy.yml
+* deploy.yml: https://github.com/pyiron/pyiron/blob/main/.github/workflows/deploy.yml
 
-* docs.yml: https://github.com/pyiron/pyiron/blob/master/.github/workflows/docs.yml
+* docs.yml: https://github.com/pyiron/pyiron/blob/main/.github/workflows/docs.yml
 
-* notebooks.yml: https://github.com/pyiron/pyiron_base/blob/master/.github/workflows/notebooks.yml
+* notebooks.yml: https://github.com/pyiron/pyiron_base/blob/main/.github/workflows/notebooks.yml
 
-* pypicheck.yml: https://github.com/pyiron/pyiron_base/blob/master/.github/workflows/pypicheck.yml
+* pypicheck.yml: https://github.com/pyiron/pyiron_base/blob/main/.github/workflows/pypicheck.yml
 
 **UpdateDependabotPR**
 
@@ -520,12 +520,12 @@ If the job loads and runs properly, the job should also run properly on the queu
 .. _Codacy: https://www.codacy.com/
 .. _Coveralls: https://coveralls.io/
 .. _Google Python Docstring format: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
-.. _Sphinx: https://www.sphinx-doc.org/en/master/
+.. _Sphinx: https://www.sphinx-doc.org/en/main/
 .. _conda-forge: https://anaconda.org/conda-forge/pyiron_base
 .. _pip: https://pypi.org/project/pyiron-base/
 .. _Git-Tag-Guide: https://git-scm.com/book/en/v2/Git-Basics-Tagging
-.. _Deploy-Workflow: https://github.com/pyiron/pyiron_base/blob/master/.github/workflows/deploy.yml
-.. _GitHub-Action-Workflows: https://github.com/pyiron/pyiron_base/tree/master/.github/workflows
+.. _Deploy-Workflow: https://github.com/pyiron/pyiron_base/blob/main/.github/workflows/deploy.yml
+.. _GitHub-Action-Workflows: https://github.com/pyiron/pyiron_base/tree/main/.github/workflows
 .. _dependabot: https://github.com/dependabot
-.. _setup.ctg file: https://github.com/pyiron/pyiron/blob/master/setup.cfg
-.. _notebooks folder: https://github.com/pyiron/pyiron_base/tree/master/notebooks
+.. _setup.ctg file: https://github.com/pyiron/pyiron/blob/main/setup.cfg
+.. _notebooks folder: https://github.com/pyiron/pyiron_base/tree/main/notebooks
