@@ -456,13 +456,13 @@ After downloading the docker container you can use it either with jupyter notebo
 
 .. code-block:: bash
 
-    docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "source /srv/conda/envs/notebook/bin/activate; jupyter notebook --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
+    docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "source /opt/conda/bin/activate; jupyter notebook --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
 
 or with jupyter lab:
 
 .. code-block:: bash
 
-    docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "source /srv/conda/envs/notebook/bin/activate; jupyter lab --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
+    docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "source /opt/conda/bin/activate; jupyter lab --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
 
 After the run command the following line is displayed. Copy/paste this URL into your browser when you connect for the first time, to login with a token:
 
