@@ -2,4 +2,5 @@ channels:
 - conda-forge
 dependencies:
 - nbsphinx
+- sphinx <6.1
 - pyiron_atomistics
