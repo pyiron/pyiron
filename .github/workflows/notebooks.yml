@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2.2.0
     - name: Merge Environments
       shell: bash -l {0}
       run: |
@@ -28,6 +28,7 @@ jobs:
         channel-priority: strict
         auto-update-conda: true  
         environment-file: .ci_support/environment.yml
+        miniforge-variant: Mambaforge
     - name: Setup
       shell: bash -l {0}
       run: |
