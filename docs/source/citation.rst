@@ -6,7 +6,7 @@ Citing
 The pyiron integrated development environment (IDE) for computational materials science - pyiron IDE - is based on a flexible plugin infrastructure. So depending on which modules are used please cite the corresponding papers.
 
 *****************************
-pyiron paper (accepted)
+Seminal paper on pyiron
 *****************************
 
 .. code-block:: bibtex
@@ -29,7 +29,7 @@ For all the other modules/ plugins in particular those hosted at https://gitlab.
 **************
 external paper
 **************
-Some of the features in pyiron rely on external codes which should be cited separatly. In alphabetical order:
+Some of the features in pyiron rely on external codes which should be cited separately. In alphabetical order:
 
 ASE
 ===
