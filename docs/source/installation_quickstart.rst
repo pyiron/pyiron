@@ -139,7 +139,7 @@ Install the conda-packaged version of LAMMPS:
 
 14. Call the script with `python test.py`
 
-If the script runs and the appropriatet messages print out, you're finished!
+If the script runs and the appropriate messages print out, you're finished!
 Congratulations! You’re finished with the pyiron install.
 
 If you're experiencing problems, please click here for frequently encountered issues :doc:`installation_errors`
