@@ -79,7 +79,7 @@ You can usually find this information about how many resources are allowed usual
 
 The queue_primary string ("work" in the above script) is the name of the queue. Replace all instances of work, if you would like to use something else as the queue_name.
 To add more queues, simply add more entries like the `express` entry and configure the queueing script template `express.sh` accordingly.
-11. Create the `work.sh` file in the same `queues` directory:
+11. Create the `work.sh` file in the same `queues` directory, modify `YOURACCOUNT`, `YOURQUEUENAME` and `YOURENVNAME` accordingly:
 .. code-block:: bash
     #!/bin/bash
     #SBATCH --output=time.out
