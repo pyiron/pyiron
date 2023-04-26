@@ -15,6 +15,8 @@ Install pyiron on your cluster in 10 minutes!
 
 .. note:: 
     NOTE: There are systems with a very tight filequota/memory quota on the home directory. In that case, you may need to install on a different directory. Usually there is a /software or /group directory that users can have permanent storage for software on. 
+    You can adjust where mamba is installed by changing the directory when it asks you where it should be installed.
+    In this example, we install mamba in a folder named `/software/abc123/`.
 
 3. Refresh/restart your shell:
 .. code-block:: bash
@@ -55,7 +57,7 @@ Note the RESOURCE_PATHS contain two entries:
 RESOURCE_PATHS tells pyiron where we are storing our executables, job scripts and queue configuration settings.
 
 The first is the directory we just made. The second is where pyiron's environment is located on the filesystem. You can find where it is using `which python` with the environment activated, which yields something like:
-`/scratch/pawsey0380/cxc562/mambaforge/bin/python`
+`/software/abc123/mambaforge/bin/python`
 And you can replace the `bin/…` bit onwards with `envs/YOURENVNAME/share/pyiron`
 
 9. Now enter the `pyiron_resources` folder and make the `queues` folder:
@@ -127,8 +129,11 @@ Install the conda-packaged version of LAMMPS:
 
     print(job['output/generic/energy_tot'])
     print("If a list of numbers is printed above, the installation works! Congrats :)")
+14. Call the script with `python test.py`
 
 If the script runs and the message prints out, you're finished!
 Congratulations! You’re finished with the pyiron install.
+
+If you're experiencing problems, please click here for frequently encountered issues :doc:`installation_errors`
 
 For more complex tasks, such as configuring VASP or utilising on-cluster module based executables please click here :doc:`installation`.
