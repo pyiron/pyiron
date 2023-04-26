@@ -112,9 +112,10 @@ Install the conda-packaged version of LAMMPS:
 .. code-block:: bash
     mamba install -c conda-forge lammps
 
-13. Create a python script `test.py` containing the following (anywhere, preferably wherever you usually do calculations, e.g. `/scratch`).
+13. Create a python script `test.py` containing the following (anywhere, preferably wherever you usually do calculations, e.g. `/scratch`). Change the username in the `os.system("squeue -u abc123")` to your user.
 .. code-block:: python
     from pyiron_atomistics import Project
+    import os
 
     pr = Project("test_lammps")
     basis = pr.create.structure.bulk('Al', cubic=True)
@@ -128,10 +129,17 @@ Install the conda-packaged version of LAMMPS:
     job.run(delete_existing_job=True)
 
     print(job['output/generic/energy_tot'])
-    print("If a list of numbers is printed above, the installation works! Congrats :)")
+    print("If a list of numbers is printed above, running calculations on the head node works!")
+
+    # Test the queue submission
+    job_new = job.copy_to(new_job_name="test2")
+    job_new.run(run_mode="queue", delete_existing_job=True)
+    os.system("squeue -u abc123") # change abc123 to your username
+    print("If a queue table is printed out above, with the correct amount of resources, queue submission works!")
+
 14. Call the script with `python test.py`
 
-If the script runs and the message prints out, you're finished!
+If the script runs and the appropriatet messages print out, you're finished!
 Congratulations! You’re finished with the pyiron install.
 
 If you're experiencing problems, please click here for frequently encountered issues :doc:`installation_errors`
