@@ -4,7 +4,7 @@
 Install pyiron on your cluster in 10 minutes!
 ============
 
-1. First, fetch mambaforge install script from the web:
+1. First, fetch mambaforge (mamba is essentially faster conda) install script from the web:
 
 .. code-block:: bash  
     wget https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh
@@ -58,23 +58,25 @@ The first is the directory we just made. The second is where pyiron's environmen
 `/scratch/pawsey0380/cxc562/mambaforge/bin/python`
 And you can replace the `bin/…` bit onwards with `envs/YOURENVNAME/share/pyiron`
 
-9. Now enter the pyiron resources folder:
+9. Now enter the `pyiron_resources` folder and make the `queues` folder:
 .. code-block:: bash
     cd /home/abc123/pyiron_resources
+    mkdir queues
 
-Configure the queue on your supercomputer. Edit/create a queue.yaml file in the folder, with contents of:
+Configure the queue on your supercomputer. Edit/create a queue.yaml file in the `queues` folder, with contents of:
 .. code-block:: bash
     queue_type: SLURM
     queue_primary: work
     queues:
     work: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: work.sh}
+    express: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: express.sh}
 
 Change `cores_max/cores_max/run_time_max` into something fitting your HPC queue. 
 In the above example, the jobs submitted using pyiron are limited to somewhere between 1-128 cores, and a run time of 1440 minutes (1 day).
 You can usually find this information about how many resources are allowed usually on the information pages of your cluster. E.g. https://opus.nci.org.au/display/Help/Queue+Limits.
 
 The queue_primary string ("work" in the above script) is the name of the queue. Replace all instances of work, if you would like to use something else as the queue_name.
-
+To add more queues, simply add more entries like the `express` entry and configure the queueing script template `express.sh` accordingly.
 11. Create the `work.sh` file in the same `queues` directory:
 .. code-block:: bash
     #!/bin/bash
