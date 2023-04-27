@@ -65,7 +65,7 @@ And you can replace the `bin/…` bit onwards with `envs/YOURENVNAME/share/pyiro
     cd /home/abc123/pyiron_resources
     mkdir queues
 
-Configure the queue on your supercomputer. Edit/create a queue.yaml file in the `queues` folder, with contents of:
+Configure the queue on your supercomputer (SLURM setup, for [others](https://github.com/pyiron/pysqa/tree/main/tests/config)). Edit/create a queue.yaml file in the `queues` folder, with contents of:
 .. code-block:: bash
     queue_type: SLURM
     queue_primary: work
