@@ -164,6 +164,6 @@ Install the conda-packaged version of LAMMPS:
 If the script runs and the appropriate messages print out, you're finished!
 Congratulations! You’re finished with the pyiron install.
 
-If you're experiencing problems, please click here for frequently encountered issues :doc:`installation_errors`
+If you're experiencing problems, please click here for frequently encountered issues (coming soon) :doc:`installation_errors`
 
 For more complex tasks, such as configuring VASP or utilising on-cluster module based executables please click here :doc:`installation`.
