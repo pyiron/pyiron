@@ -82,8 +82,10 @@ And you can replace the :code:`bin/…` bit onwards with :code:`envs/YOURENVNAME
     cd /home/abc123/pyiron_resources
     mkdir queues
 
-Configure the queue on your supercomputer (SLURM setup, for [others](https://github.com/pyiron/pysqa/tree/main/tests/config)). Edit/create a queue.yaml file in the :code:`queues` folder, with contents of:
+Configure the queue on your supercomputer (SLURM setup, for `others <https://github.com/pyiron/pysqa/tree/main/tests/config>`). Edit/create a queue.yaml file in the :code:`queues` folder, with contents of:
+
 .. code-block:: bash
+
     queue_type: SLURM
     queue_primary: work
     queues:
@@ -92,7 +94,7 @@ Configure the queue on your supercomputer (SLURM setup, for [others](https://git
 
 Change :code:`cores_max/cores_max/run_time_max` into something fitting your HPC queue. 
 In the above example, the jobs submitted using pyiron are limited to somewhere between 1-128 cores, and a run time of 1440 minutes (1 day).
-You can usually find this information about how many resources are allowed usually on the information pages of your cluster. E.g. https://opus.nci.org.au/display/Help/Queue+Limits.
+You can usually find this information about how many resources are allowed usually on the information pages of your cluster. It usually looks something like `this <https://opus.nci.org.au/display/Help/Queue+Limits>`.
 
 The queue_primary string ("work" in the above script) is the name of the queue. Replace all instances of work, if you would like to use something else as the queue_name.
 To add more queues, simply add more entries like the :code:`express` entry and configure the queueing script template :code:`express.sh` accordingly.
