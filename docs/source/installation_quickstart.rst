@@ -83,7 +83,9 @@ And you can replace the :code:`bin/…` bit onwards with :code:`envs/YOURENVNAME
     mkdir queues
 
 Configure the queue on your supercomputer (SLURM setup, for [others](https://github.com/pyiron/pysqa/tree/main/tests/config)). Edit/create a queue.yaml file in the :code:`queues` folder, with contents of:
+
 .. code-block:: bash
+    
     queue_type: SLURM
     queue_primary: work
     queues:
