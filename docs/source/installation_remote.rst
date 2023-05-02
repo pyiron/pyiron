@@ -66,7 +66,6 @@ Change :code:`YOURENVNAME` to your liking.
 
 9. Now enter the :code:`pyiron_resources` folder and make the :code:`queues` folder:
 
-
 .. code-block:: bash
 
     cd /home/pyiron_resources
@@ -78,7 +77,6 @@ Change :code:`YOURENVNAME` to your liking.
 So now, there should be a :code:`queue.yaml` file and a :code:`work.sh` file in there.
 
 11. Now we configure a :code:`ssh_key` for the connection between your cluster/HPC and your local machine.
-
 
 Call :code:`ssh-keygen`:
 
@@ -94,7 +92,7 @@ When it prompts you with :code:`Enter file in which to save the key (/root/.ssh/
 
     /root/.ssh/id_rsa_YOURHPC
 
-Rename the `:code:`id_rsa_YOURHPC` accordingly.
+Rename the :code:`id_rsa_YOURHPC` accordingly.
 
 When it prompts you for the passphrases, just press :code:`Enter` twice - we don't need a passphrase:
 
@@ -164,9 +162,13 @@ Replace the following fields accordingly:
 
 :code:`queue_primary`: The primary queue that you use. Must be present at the bottom :code:`queues` field.
 
-:code:`ssh_host`: The host address of your remote cluster. E.g. If you sign in usually with :code:`ssh abc123@gadi.nci.org.au`, it is :code:`gadi.nci.org.au`.
+:code:`ssh_host`: The host address of your remote cluster. 
 
-:code:`ssh_username`: The username that you usually sign in with. E.g. If you sign in usually with :code:`ssh abc123@gadi.nci.org.au`, it is :code:`abc123`.
+E.g. If you sign in usually with :code:`ssh abc123@gadi.nci.org.au`, it is :code:`gadi.nci.org.au`.
+
+:code:`ssh_username`: The username that you usually sign in with. 
+
+E.g. If you sign in usually with :code:`ssh abc123@gadi.nci.org.au`, it is :code:`abc123`.
 
 :code:`known_hosts`: The directory where you store your :code:`known_hosts` locally. If you don't know what this is, you most likely don't need to change this field.
 
@@ -178,14 +180,14 @@ Replace the following fields accordingly:
 
 :code:`ssh_local_path`: Local path to place the calculations you've fetched the results from the cluster on your local machine.
 
-:code:`ssh_continous_connection`: Whether or not to use a single SSH connection or multiple ones (use this if your connection is unreliable)
+:code:`ssh_continous_connection`: Whether or not to use a single SSH connection or multiple ones (use this if your connection is unreliable).
 
 The entries underneath :code:`queues` should read the same as what you have in the :code:`queue.yaml file` in the remote cluster as you have previously configured:
 
 14. Now, at this point, the submission should work. Let's test a submission of a small job. On the local machine create a python script:
 
 .. warning:: 
-    WARNING: :code:`pyiron` must be present in the environment that is present after you initialise a shell! If it is not, pyiron will fail to initialise the calculation!
+    WARNING: :code:`pyiron` must be present in the environment that is present after you initialise a shell in the remote machine! If it is not, pyiron will fail to initialise the calculation!
     To make pyiron the default environment after you initialise the shell, add the following line to your :code:`.bashrc` :
 
     :code:`source /software/abc123/mambaforge/bin/activate pyiron`
