@@ -184,6 +184,14 @@ The entries underneath :code:`queues` should read the same as what you have in t
 
 14. Now, at this point, the submission should work. Let's test a submission of a small job. On the local machine create a python script:
 
+.. warning:: 
+    WARNING: :code:`pyiron` must be present in the environment that is present after you initialise a shell! If it is not, pyiron will fail to initialise the calculation!
+    To make pyiron the default environment after you initialise the shell, add the following line to your :code:`.bashrc` :
+
+    source /software/abc123/mambaforge/bin/activate pyiron
+
+    Adjust the above path to the appropriate path such that it can activate a python environment containing :code:`pyiron`.
+
 .. code-block:: python
 
     from pyiron_atomistics import Project
