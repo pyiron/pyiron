@@ -95,6 +95,7 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
 
    source/about.rst
    source/installation_quickstart.rst
+   source/installation_remote.rst
    source/installation.rst
    source/examples.rst
    Team <https://pyiron.org/team/>
