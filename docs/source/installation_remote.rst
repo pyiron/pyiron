@@ -8,7 +8,9 @@ Install pyiron so you can submit to remote HPCs from a local machine (laptop/wor
 
 If not, click `here  <https://pyiron.readthedocs.io/en/latest/source/installation_quickstart.html>`_ and finish that first.
 
-2. To install pyiron on your local machine, first install :code-block:`mamba` via:
+2. If you already have conda/mamba installed, you can skip this step. 
+
+To install pyiron on your local machine, first install :code:`mamba` via:
 
 .. code-block:: bash 
 
@@ -163,11 +165,9 @@ Replace the following fields accordingly:
 :code:`queue_primary`: The primary queue that you use. Must be present at the bottom :code:`queues` field.
 
 :code:`ssh_host`: The host address of your remote cluster. 
-
 E.g. If you sign in usually with :code:`ssh abc123@gadi.nci.org.au`, it is :code:`gadi.nci.org.au`.
 
 :code:`ssh_username`: The username that you usually sign in with. 
-
 E.g. If you sign in usually with :code:`ssh abc123@gadi.nci.org.au`, it is :code:`abc123`.
 
 :code:`known_hosts`: The directory where you store your :code:`known_hosts` locally. If you don't know what this is, you most likely don't need to change this field.
