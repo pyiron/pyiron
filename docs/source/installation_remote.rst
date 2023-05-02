@@ -8,7 +8,7 @@ Install pyiron so you can submit to remote HPCs from a local machine (laptop/wor
 
 If not, click `here  <https://pyiron.readthedocs.io/en/latest/source/installation_quickstart.html>`_ and finish that first.
 
-2. To install pyiron on your local machine, first install :code-block: `mamba` via:
+2. To install pyiron on your local machine, first install :code-block:`mamba` via:
 
 .. code-block:: bash 
 
