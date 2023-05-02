@@ -97,11 +97,12 @@ Configure the queue on your supercomputer (SLURM setup, for `others <https://git
 
 Change :code:`cores_max/cores_max/run_time_max` into something fitting your HPC queue. 
 In the above example, the jobs submitted using pyiron are limited to somewhere between 1-128 cores, and a run time of 1440 minutes (1 day).
-You can usually find this information about how many resources are allowed usually on the information pages of your cluster. It usually looks something like `this <https://opus.nci.org.au/display/Help/Queue+Limits>`_ .
+You can usually find this information about how many resources are allowed usually on the information pages of your cluster. It usually looks something like `this <https://opus.nci.org.au/display/Help/Queue+Limits>`_.
 
 The queue_primary string ("work" in the above script) is the name of the queue. Replace all instances of work, if you would like to use something else as the queue_name.
 To add more queues, simply add more entries like the :code:`express` entry and configure the queueing script template :code:`express.sh` accordingly.
-11. Create the :code:`work.sh` file in the same :code:`queues` directory, modify :code:`YOURACCOUNT`, :code:`YOURQUEUENAME` and :code:`YOURENVNAME` accordingly:
+
+10. Create the :code:`work.sh` file in the same :code:`queues` directory, modify :code:`YOURACCOUNT`, :code:`YOURQUEUENAME` and :code:`YOURENVNAME` accordingly:
 
 .. code-block:: bash
 
@@ -129,7 +130,7 @@ Notice that the environment is activated in this example script using the :code:
 
 Congrats! We're almost there.
 
-12. Now to verify the installation is working; we will conduct a test LAMMPS calculation.
+11. Now to verify the installation is working; we will conduct a test LAMMPS calculation.
 
 Install the conda-packaged version of LAMMPS:
 
@@ -137,7 +138,7 @@ Install the conda-packaged version of LAMMPS:
 
     mamba install -c conda-forge lammps
 
-13. Create a python script :code:`test.py` containing the following (anywhere, preferably wherever you usually do calculations, e.g. :code:`/scratch`). Change the username in the :code:`os.system("squeue -u abc123")` to your user.
+12. Create a python script :code:`test.py` containing the following (anywhere, preferably wherever you usually do calculations, e.g. :code:`/scratch`). Change the username in the :code:`os.system("squeue -u abc123")` to your user.
 
 .. code-block:: python
 
@@ -164,7 +165,7 @@ Install the conda-packaged version of LAMMPS:
     os.system("squeue -u abc123") # change abc123 to your username
     print("If a queue table is printed out above, with the correct amount of resources, queue submission works!")
 
-14. Call the script with :code:`python test.py`
+13. Call the script with :code:`python test.py`
 
 If the script runs and the appropriate messages print out, you're finished!
 Congratulations! You’re finished with the pyiron install.
