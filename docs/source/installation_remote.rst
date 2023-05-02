@@ -130,7 +130,7 @@ And now, the final output in your local terminal looks something like:
 
 12. Now, copy the contents of :code:`id_rsa_YOURHPC.pub` over to the remote cluster into the :code:`$HOME/.ssh/authorized_keys`.
 
-If the file is not empty, make sure that there is an empty line in between.
+If the file is not empty, make sure that there is an empty line in between entries.
 
 Check that the key works by checking that we can :code:`ssh` into the remote cluster on your local terminal without a password:
 
