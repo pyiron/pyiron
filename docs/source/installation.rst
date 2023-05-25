@@ -5,10 +5,10 @@ Installation
 ============
 
 **************************************
-Quickstart installation - cluster/HPC
+Quickstart installation (<15 mins)
 **************************************
 
-Install pyiron in <10 minutes!
+Cluster/HPC install 
 =============================================
 
 1. First, fetch mambaforge (mamba is essentially faster conda) install script from the web:
