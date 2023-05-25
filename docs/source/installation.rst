@@ -4,13 +4,11 @@
 Installation
 ============
 
-**************************************
 Quickstart installation (<10 mins!)
 **************************************
 
-=============================================
 Install on your cluster/HPC
-=============================================
+============================
 
 1. First, fetch mambaforge (mamba is essentially faster conda) install script from the web:
 
@@ -185,7 +183,6 @@ If you're experiencing problems, please click here for frequently encountered is
 
 For more complex tasks, such as configuring VASP or utilising on-cluster module based executables please see below.
 
-===============================================
 Submit jobs to a remote HPC from local machine 
 ===============================================
 
@@ -943,4 +940,3 @@ To get a better overview of all the available functionality inside pyiron we rec
 
 .. toctree::
    :maxdepth:2
-.. _installation:
