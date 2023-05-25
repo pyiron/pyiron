@@ -5,10 +5,10 @@ Installation
 ============
 
 **************************************
-Quickstart installation - cluster/HPC
+Quickstart installation (<15 mins)
 **************************************
 
-Install pyiron in <10 minutes!
+Cluster/HPC install 
 =============================================
 
 1. First, fetch mambaforge (mamba is essentially faster conda) install script from the web:
@@ -95,7 +95,7 @@ And you can replace the :code:`bin/…` bit onwards with :code:`envs/YOURENVNAME
     cd /home/abc123/pyiron_resources
     mkdir queues
 
-Configure the queue on your supercomputer (SLURM setup, for `others <https://github.com/pyiron/pysqa/tree/main/tests/config>`_ ). Edit/create a :code:`queue.yaml` file in the :code:`queues` folder, with contents of:
+Configure the queue on your supercomputer (SLURM setup, for `others <https://pysqa.readthedocs.io/en/latest/>`_ ). Edit/create a :code:`queue.yaml` file in the :code:`queues` folder, with contents of:
 
 .. code-block:: bash
 
@@ -135,6 +135,10 @@ To add more queues, simply add more entries like the :code:`express` entry and c
     source /software/abc123/mambaforge/bin/activate YOURENVNAME
 
     {{command}}
+
+In general, for the most pain-free experience, just replace the {{...}} fields that are present in the above template with your existing working scripts. 
+
+i.e. Replace where you put the number of cores with :code:`{{cores}}`` and :code:`{{memory_max}}`, and so on, in your already working jobscripts to generate this template for pyiron.
 
 Notice that the environment is activated in this example script using the :code:`source …/activate` line. Make sure you do this or the queueing system can’t see the environment in which you installed pyiron.
 
@@ -184,9 +188,10 @@ If you're experiencing problems, please click here for frequently encountered is
 
 For more complex tasks, such as configuring VASP or utilising on-cluster module based executables please see below.
 
-**************************************
-Install pyiron so you can submit to remote HPCs from a local machine (laptop/workstation, Linux/WSL)
-**************************************
+Install pyiron so you can submit to remote HPCs from a local machine 
+==========================================
+
+Local machine can be a laptop/workstation, and you can ssh into the remote machine (HPC/cluster).
 
 1. If you have already installed pyiron on your cluster, and it works, we can proceed. 
 
