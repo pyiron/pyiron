@@ -939,4 +939,4 @@ Next Steps
 To get a better overview of all the available functionality inside pyiron we recommend the examples provided in the examples section - :doc:`examples`.
 
 .. toctree::
-   :maxdepth:2
+    :max-depth:2
