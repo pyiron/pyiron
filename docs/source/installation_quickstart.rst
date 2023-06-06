@@ -85,15 +85,15 @@ And you can replace the :code:`bin/…` bit onwards with :code:`envs/YOURENVNAME
     cd /home/abc123/pyiron_resources
     mkdir queues
 
-Configure the queue on your supercomputer (SLURM setup, for `others <https://github.com/pyiron/pysqa/tree/main/tests/config>`_ ). Edit/create a :code:`queue.yaml` file in the :code:`queues` folder, with contents of:
+Configure the queue on your supercomputer (exemplary SLURM setup, for other/more advanced setup see `pysqa documentation <https://pysqa.readthedocs.io/en/latest/queue.html>`_). Edit/create a :code:`queue.yaml` file in the :code:`queues` folder, with contents of:
 
 .. code-block:: bash
 
     queue_type: SLURM
     queue_primary: work
     queues:
-    work: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: work.sh}
-    express: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: express.sh}
+      work: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: work.sh}
+      express: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: express.sh}
 
 Change :code:`cores_max/cores_max/run_time_max` into something fitting your HPC queue. 
 In the above example, the jobs submitted using pyiron are limited to somewhere between 1-128 cores, and a run time of 1440 minutes (1 day).
