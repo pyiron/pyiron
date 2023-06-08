@@ -95,7 +95,7 @@ And you can replace the :code:`bin/…` bit onwards with :code:`envs/YOURENVNAME
     cd /home/abc123/pyiron_resources
     mkdir queues
 
-Configure the queue on your supercomputer (example for SLURM setup, for others/more advanced setups see`pysqa docs <https://pysqa.readthedocs.io/en/latest/>`_ ). Edit/create a :code:`queue.yaml` file in the :code:`queues` folder, with contents of:
+Configure the queue on your supercomputer (example for SLURM setup, for others/more advanced setups see `pysqa docs <https://pysqa.readthedocs.io/en/latest/>`_). Edit/create a :code:`queue.yaml` file in the :code:`queues` folder, with contents of:
 
 .. code-block:: bash
 
