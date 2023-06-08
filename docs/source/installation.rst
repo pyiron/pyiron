@@ -95,15 +95,15 @@ And you can replace the :code:`bin/…` bit onwards with :code:`envs/YOURENVNAME
     cd /home/abc123/pyiron_resources
     mkdir queues
 
-Configure the queue on your supercomputer (SLURM setup, for `others <https://pysqa.readthedocs.io/en/latest/>`_ ). Edit/create a :code:`queue.yaml` file in the :code:`queues` folder, with contents of:
+Configure the queue on your supercomputer (example for SLURM setup, for others/more advanced setups see`pysqa docs <https://pysqa.readthedocs.io/en/latest/>`_ ). Edit/create a :code:`queue.yaml` file in the :code:`queues` folder, with contents of:
 
 .. code-block:: bash
 
     queue_type: SLURM
     queue_primary: work
     queues:
-    work: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: work.sh}
-    express: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: express.sh}
+        work: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: work.sh}
+        express: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: express.sh}
 
 Change :code:`cores_max/cores_max/run_time_max` into something fitting your HPC queue. 
 In the above example, the jobs submitted using pyiron are limited to somewhere between 1-128 cores, and a run time of 1440 minutes (1 day).
@@ -344,8 +344,8 @@ If it works, it means that the ssh key works, and we can proceed.
     ssh_local_path: /root/pyiron_remote_data/
     ssh_continous_connection: True 
     queues:
-    work: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: work.sh}
-    express: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: express.sh}
+        work: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: work.sh}
+        express: {cores_max: 128, cores_min: 1, run_time_max: 1440, script: express.sh}
 
 Replace the following fields accordingly:
 
@@ -720,8 +720,8 @@ Besides the queue templates, the queues directory also contains the queue config
     queue_type: SLURM
     queue_primary: queue_one
     queues:
-      queue_one: {cores_max: 40, cores_min: 1, run_time_max: 3600, script: queue_1.sh}
-      queue_two: {cores_max: 1200, cores_min: 40, run_time_max: 345600, script: queue_2.sh}
+        queue_one: {cores_max: 40, cores_min: 1, run_time_max: 3600, script: queue_1.sh}
+        queue_two: {cores_max: 1200, cores_min: 40, run_time_max: 345600, script: queue_2.sh}
 
 The queue configuration defines the limits of the individual queues which helps the user to select the appropriate queue for their simulation. The :code:`queue_type` defines the type of the queuing system, the :code:`queue_primary` defines the primary queue and finally :code:`queues` defines the available queues. Typically each queue is associated with a shell script template, like in this case :code:`queue_one` is associated with :code:`queue_1.sh` and :code:`queue_two` is associated with :code:`queue_2.sh`. Additional queue configuration templates are available on `Github <https://github.com/pyiron/pysqa/tree/main/tests/config>`_.
 
@@ -761,8 +761,8 @@ This queue configuration now includes additional options to handle the SSH conne
     ssh_local_path: /home/jan/pyiron/projects/
     ssh_continous_connection: True
     queues:
-      queue_one: {cores_max: 40, cores_min: 1, run_time_max: 3600}
-      queue_two: {cores_max: 1200, cores_min: 40, run_time_max: 345600}
+        queue_one: {cores_max: 40, cores_min: 1, run_time_max: 3600}
+        queue_two: {cores_max: 1200, cores_min: 40, run_time_max: 345600}
 
 The :code:`ssh_host` defines the name of the login node, with :code:`ssh_username` the user on the remote machine and :code:`known_hosts` and :code:`ssh_key` the local configuration files to connect to the remote host. Currently pyiron only supports ssh key based authentification for remote calculation. By setting :code:`ssh_continous_connection`, the same connection is reused for data transfers which is commonly more efficient than creating individual connections for each command. Still, this assumes that the connection between the workstation or group server and the remote HPC cluster is stable. If this is not the case - for example, when using a mobile connection - it is recommended to disable this option. The :code:`ssh_remote_config_dir` defines the configuration of the queuing system on the remote cluster. Finally the calculations are copied from the local directory :code:`ssh_local_path` to the remote directory :code:`ssh_remote_path`. In the above example, if a calculation is submitted in the directory :code:`/home/jan/pyiron/projects/first/subproject` then the files are copied to :code:`/u/janj/remote/first/subproject`. By retaining the path when transfering the files it is easier to debug failed calculations. Finally the queues are defined locally to have quick access to the queue configurations, but it is not necessary to define the submission templates as those are available on the remote machine. In addition the other resources have to be identical on both systems. The easiest way to achieve this is to copy the resource directory once the installation is working on the remote machine.
 
