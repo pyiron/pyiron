@@ -26,7 +26,7 @@ setup(
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*", "*docs*", "*binder*", "*conda*", "*notebooks*", "*.ci_support*"]),
     install_requires=[
-        'pyiron_atomistics==0.3.1'
+        'pyiron_atomistics==0.3.2'
     ],
     cmdclass=versioneer.get_cmdclass(),
 
