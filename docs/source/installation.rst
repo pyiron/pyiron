@@ -4,6 +4,9 @@
 Installation
 ============
 
+.. warning:: 
+    The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using Windows we recommend installing the `Windows subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/install-win10>` before you install pyiron and if you are on macOS X we recommend using a  `virtual machine/ virtual box <https://www.virtualbox.org>`_. Native installations on both Windows and macOS X are possible, but functionality is limited. The following instructions assume a linux-like environment. Windows installs will have to go through the Anaconda setup.
+
 **************************************
 Quickstart installation (<15 mins)
 **************************************
