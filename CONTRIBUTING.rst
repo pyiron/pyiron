@@ -343,6 +343,19 @@ Those pre-release versions are named `<version_number>.post0.dev<release number>
    0.2.0.post0.dev1
 For pip both the pre-releases as well as the official releases are available. For conda only the official releases are available.
 
+Versioning
+----------
+
+Pyiron projects use "semantic versioning". The [basic concept] is:
+
+    Given a version number MAJOR.MINOR.PATCH, increment the:
+
+    1. MAJOR version when you make incompatible API changes
+    2. MINOR version when you add functionality in a backward compatible manner
+    3. PATCH version when you make backward compatible bug fixes
+
+This is fairly straightforward, but there is a little bit of interpretation needed here for what is "incompatible" and what is "backward compatible". In particular, for the edge-case of re-ordering keyword arguments -- which _could_ break backwards compatibility if a downstream user was using kwargs positionally -- we have decided to treat this as a minor update. Under such circumstances, please also take the opportunity to add a `*` argument between the last positional arg and the first kwarg, as this will prevent users form (ab)using kwargs as positional arguments going forwards.
+
 Building process for a release
 ---------------------------------
 Check if all tests as explained in the next chapter have passed
