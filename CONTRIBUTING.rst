@@ -255,7 +255,7 @@ Python styleguide
 Please follow `PEP8 conventions`_ for all python code added to pyiron. Pull
 requests will be checked for PEP8 plus a few other security issues with
 `Codacy`_, and will be rejected if they do not meet the specified
-formatting criteria.
+formatting criteria. Further, new contributions will be formatted according to the `black formatting`_ rules.
 
 Any new features should include coverage with a unit test, such that
 your pull request does not decrease pyiron's overall coverage. This
@@ -543,3 +543,4 @@ If the job loads and runs properly, the job should also run properly on the queu
 .. _setup.ctg file: https://github.com/pyiron/pyiron/blob/main/setup.cfg
 .. _notebooks folder: https://github.com/pyiron/pyiron_base/tree/main/notebooks
 .. _basic concept: https://semver.org/#summary
+.. _black formatting: https://github.com/psf/black
