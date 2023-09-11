@@ -257,6 +257,8 @@ requests will be checked for PEP8 plus a few other security issues with
 `Codacy`_, and will be rejected if they do not meet the specified
 formatting criteria. Further, new contributions will be formatted according to the `black formatting`_ rules.
 
+Positional and keyword arguments should be separated by an `*,` argument, which is python syntactic sugar which will prevent downstream users from abusing keyword arguments as positional arguments.
+
 Any new features should include coverage with a unit test, such that
 your pull request does not decrease pyiron's overall coverage. This
 will be automatically tested within the ci test suite and `Coveralls`_.
