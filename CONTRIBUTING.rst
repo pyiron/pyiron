@@ -346,7 +346,7 @@ For pip both the pre-releases as well as the official releases are available. Fo
 Versioning
 ----------
 
-Pyiron projects use "semantic versioning". The [basic concept] is:
+Pyiron projects use "semantic versioning". The `basic concept`_ is:
 
     Given a version number MAJOR.MINOR.PATCH, increment the:
 
@@ -542,3 +542,4 @@ If the job loads and runs properly, the job should also run properly on the queu
 .. _dependabot: https://github.com/dependabot
 .. _setup.ctg file: https://github.com/pyiron/pyiron/blob/main/setup.cfg
 .. _notebooks folder: https://github.com/pyiron/pyiron_base/tree/main/notebooks
+.. _basic concept: https://semver.org/#summary
