@@ -26,7 +26,7 @@ jobs:
           git config --local user.name "pyiron-runner"
           git commit -m "[dependabot skip] Update environment" -a
       - name: UpdateDependabotPR push
-        uses: ad-m/github-push-action@main
+        uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.DEPENDABOT_WORKFLOW_TOKEN }}
           branch: ${{ github.event.pull_request.head.ref }}
