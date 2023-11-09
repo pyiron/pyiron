@@ -255,7 +255,9 @@ Python styleguide
 Please follow `PEP8 conventions`_ for all python code added to pyiron. Pull
 requests will be checked for PEP8 plus a few other security issues with
 `Codacy`_, and will be rejected if they do not meet the specified
-formatting criteria.
+formatting criteria. Further, new contributions will be formatted according to the `black formatting`_ rules.
+
+Positional and keyword arguments should be separated by an `*,` argument, which is python syntactic sugar which will prevent downstream users from abusing keyword arguments as positional arguments.
 
 Any new features should include coverage with a unit test, such that
 your pull request does not decrease pyiron's overall coverage. This
@@ -342,6 +344,19 @@ The major difference for pypi (pip) is that installing pre-release versions is p
 Those pre-release versions are named `<version_number>.post0.dev<release number>` ::
    0.2.0.post0.dev1
 For pip both the pre-releases as well as the official releases are available. For conda only the official releases are available.
+
+Versioning
+----------
+
+Pyiron projects use "semantic versioning". The `basic concept`_ is:
+
+    Given a version number MAJOR.MINOR.PATCH, increment the:
+
+    1. MAJOR version when you make incompatible API changes
+    2. MINOR version when you add functionality in a backward compatible manner
+    3. PATCH version when you make backward compatible bug fixes
+
+This is fairly straightforward, but there is a little bit of interpretation needed here for what is "incompatible" and what is "backward compatible". In particular, for the edge-case of re-ordering keyword arguments -- which _could_ break backwards compatibility if a downstream user was using kwargs positionally -- we have decided to treat this as a minor update. Under such circumstances, please also take the opportunity to add a `*` argument between the last positional arg and the first kwarg, as this will prevent users form (ab)using kwargs as positional arguments going forwards.
 
 Building process for a release
 ---------------------------------
@@ -529,3 +544,5 @@ If the job loads and runs properly, the job should also run properly on the queu
 .. _dependabot: https://github.com/dependabot
 .. _setup.ctg file: https://github.com/pyiron/pyiron/blob/main/setup.cfg
 .. _notebooks folder: https://github.com/pyiron/pyiron_base/tree/main/notebooks
+.. _basic concept: https://semver.org/#summary
+.. _black formatting: https://github.com/psf/black
