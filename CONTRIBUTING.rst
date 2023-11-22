@@ -15,7 +15,7 @@ pyiron organization. Please email us if you would like to join.
 Wait I don't want to read this; I just have a quick question/bugfix!
 ====================================================================
 
-1. Check out our `FAQ page`_; your question might already be answered there.
+1. Check out our :ref:`FAQ` page; your question might already be answered there.
 2. If your question relates to a bug in pyiron, please briefly search the `issues page`_ and open a new labeled issue if you don't see anything related to your question there.
 3. You can also contact us on stackoverflow with the tag 'pyiron'. There we will answer your questions. For bug fixes, please open an issue on github, as mentioned before.
 
@@ -87,7 +87,7 @@ Reporting bugs
 **Before Submitting A Bug Report**
 
 Check if you can reproduce the problem in the latest version of pyiron.
-Check the `FAQ page`_ for a list of common questions and problems.
+Check the :ref:`faq` for a list of common questions and problems.
 Briefly search the issues page for `bugs`_  to see if the problem has already
 been reported. If it has and the issue is still open, add a comment
 to the existing issue instead of opening a new one.
@@ -334,15 +334,26 @@ pyiron release distribution
     :alt: Downloads
 
 Pyiron is released through `conda-forge`_ and  `pip`_. 
-Both packages are created automatically and maintained with every new release of pyiron. In order to use these distributions simply use the following command for conda::
+Both packages are created automatically and maintained with every new release of pyiron. In order to use these distributions simply use the following command for conda
+
+.. code-block::
+
    conda install -c conda-forge pyiron
-In order to use the pip distribution use::
+
+In order to use the pip distribution use:
+.. code-block::
+
    pip install pyiron
+
 Just like each other commit to the master branch the tagged releases are pushed to pypi.org (https://pypi.org/project/pyiron/#history)::
-The major difference for pypi (pip) is that installing pre-release versions is possible using the `--pre` flag::
+The major difference for pypi (pip) is that installing pre-release versions is possible using the `--pre` flag:
+.. code-block::
+
    pip install --pre pyiron
-Those pre-release versions are named `<version_number>.post0.dev<release number>` ::
+
+Those pre-release versions are named `<version_number>.post0.dev<release number>`:
    0.2.0.post0.dev1
+
 For pip both the pre-releases as well as the official releases are available. For conda only the official releases are available.
 
 Versioning
@@ -362,21 +373,26 @@ Building process for a release
 ---------------------------------
 Check if all tests as explained in the next chapter have passed
 1. Create a Git tag to mark the release
-This step is done manually and important to trigger all the following steps. Tag can be created under https://github.com/pyiron/pyiron/tags. 
-The following steps are automated and will be performed once a tag is created. 
+This step is done manually and important to trigger all the following steps. Tag can be created under https://github.com/pyiron/pyiron/tags.
+The following steps are automated and will be performed once a tag is created.
 In order to keep the tags consistent please follow the `Git-Tag-Guide`_.
-The tag format consists of a tag_prefix (<package name>-) and the release version, for example::
-     pyiron-0.2.0
+The tag format consists of a tag_prefix (<package name>-) and the release version, for example:
+  pyiron-0.2.0
+
 2. Automatically create PyPi package
-  After the tag is created, the `Deploy-Workflow`_ is triggered, which creates the PyPi Package.
-  The configuration of the release is included in the `setup.ctg file`_.
-  This Workflow first installs all dependencies, then allows for future versions of the dependencies and builds the package. After that the package is published to `pip`_.
+After the tag is created, the `Deploy-Workflow`_ is triggered, which creates the PyPi Package.
+The configuration of the release is included in the `setup.ctg file`_.
+This Workflow first installs all dependencies, then allows for future versions of the dependencies and builds the package. After  that the package is published to `pip`_.
+
 3. Automatically create conda-forge package
-  This release than is recognized by a conda-forge bot, which triggers a new pull request for the conda-forge package and merges automatically if all tests pass.
+This release than is recognized by a conda-forge bot, which triggers a new pull request for the conda-forge package and merges automatically if all tests pass.
+
 4. Docker images
-  The docker images are maintained manually and therefore not updated with every release. The docker images are build using the conda packages and can be found in different variants under https://github.com/pyiron/docker-stacks
+The docker images are maintained manually and therefore not updated with every release. The docker images are build using the conda packages and can be found in different variants under https://github.com/pyiron/docker-stacks
+
 5. Graphical installer
-  The graphical installer is also maintained manually and not updated as frequently and can be found at https://github.com/pyiron/pyiron-installer.
+The graphical installer is also maintained manually and not updated as frequently and can be found at https://github.com/pyiron/pyiron-installer.
+
 
 GitHub Workflows
 -----------------------------
@@ -437,7 +453,7 @@ After that, pip check is run, to verify if the packages installed based on the e
 Debugging
 ================
 My job does not run on the queue
------------------------------
+---------------------------------
 
 In case a job runs properly while executing it locally (or on the head node), but not when you submit it to a queue,
 
@@ -527,7 +543,6 @@ If the job loads and runs properly, the job should also run properly on the queu
 .. _Max Planck Institut für Eisenforschung: https://mpie.de
 .. _github page: https://github.com/pyiron
 .. _issues page: https://github.com/pyiron/pyiron/issues
-.. _FAQ page: https://github.com/pyiron/pyiron/docs/source/faq.html
 .. _bugs: https://github.com/pyiron/pyiron/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug%22
 .. _Good first issues: https://github.com/pyiron/pyiron/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22
 .. _Help wanted issues: https://github.com/pyiron/pyiron/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
