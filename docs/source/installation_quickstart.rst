@@ -1,8 +1,12 @@
 .. _installation_quickstart:
 
-============
+=============================================
 Install pyiron on your cluster in 15 minutes!
-============
+=============================================
+
+.. attention::
+
+    This guide is assuming a linux environment on the compute cluster!
 
 1. First, fetch mambaforge (mamba is essentially faster conda) install script from the web:
 
@@ -182,13 +186,16 @@ If you're experiencing problems, please click here for frequently encountered is
 For more complex tasks, such as configuring VASP or utilising on-cluster module based executables please click here :doc:`installation`.
 
 Install and configure pyiron on a local machine so you can submit to remote HPCs
-============
+================================================================================
+
+.. attention::
+    The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using Windows we recommend installing the `Windows subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/install-win10>` before you install pyiron and if you are on macOS X we recommend using a  `virtual machine/ virtual box <https://www.virtualbox.org>`_. Native installations on both Windows and macOS X are possible, but functionality is limited. The following instructions assume a linux-like environment. Windows installs will have to go through the Anaconda setup.
 
 1. If you have already installed pyiron on your cluster, and it works, we can proceed.
 
-If not, click `here  <https://pyiron.readthedocs.io/en/latest/source/installation_quickstart.html>`_ and finish that first.
+If not, start at the top of this page and finish that first.
 
-2. To install pyiron on your local machine, first install :code-block:`mamba` via:
+2. To install pyiron on your local machine, first install :code:`mamba` via:
 
 .. code-block:: bash
 
@@ -299,14 +306,14 @@ And now, the final output in your local terminal looks something like:
     +---[RSA 3072]----+
     |     .X=+...oo.  |
     |E    = *.o .. oo |
-|+o. + . o    oo+o|
-|oo o .   .    o+=|
-|. o . . S    .. =|
-|     o      o  * |
-|      . .  . oo .|
-|       . . o. oo |
-|         .o +o . |
-+----[SHA256]-----+
+    |+o. + . o    oo+o|
+    |oo o .   .    o+=|
+    |. o . . S    .. =|
+    |     o      o  * |
+    |      . .  . oo .|
+    |       . . o. oo |
+    |         .o +o . |
+    +----[SHA256]-----+
 
 12. Now, copy the contents of :code:`id_rsa_YOURHPC.pub` over to the remote cluster into the :code:`$HOME/.ssh/authorized_keys`.
 
@@ -366,8 +373,8 @@ The entries underneath :code:`queues` should read the same as what you have in t
 
 14. Now, at this point, the submission should work. Let's test a submission of a small job. On the local machine create a python script:
 
-.. warning::
-    WARNING: :code:`pyiron` must be present in the environment that is present after you initialise a shell in the remote machine! If it is not, pyiron will fail to initialise the calculation!
+.. attention::
+    :code:`pyiron` must be present in the environment that is present after you initialise a shell in the remote machine! If it is not, pyiron will fail to initialise the calculation!
     To make pyiron the default environment after you initialise the shell, add the following line to your :code:`.bashrc` :
 
     :code:`source /software/abc123/mambaforge/bin/activate pyiron`

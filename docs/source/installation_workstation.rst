@@ -1,8 +1,8 @@
 .. _installation_workstation:
 
-============
+=============================
 Installation on a workstation
-============
+=============================
 
 The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using Windows we recommend installing the `Windows subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_ before you install pyiron and if you are on macOS X we recommend using a `virtual machine/ virtual box <https://www.virtualbox.org>`_. Native installations on both Windows and macOS X are possible but are restricted to molecular dynamics calculations with interatomic potentials and do not support density functional theory(DFT) codes. We collaborate with the open-source community at `conda-forge <https://conda-forge.org>`_ to not only provide the pyiron package via their community channel, but also executables for compatible simulation codes like `GPAW <https://wiki.fysik.dtu.dk/gpaw/>`_, `LAMMPS <https://lammps.sandia.gov>`_ and `S/PHI/nX <https://sxrepo.mpie.de>`_ and their parameter files like pseudopotentials and interatomic potentials. To get started you can install pyiron using:
 
@@ -23,7 +23,7 @@ In pyiron we use the `NGLview <http://nglviewer.org/nglview/latest/>`_ package t
 
     conda install -c conda-forge nglview
 
-In case you prefer `jupyter lab <https://jupyter.org>`_ over jupyter notebooks, you can also install NGLview for jupyter lab. This requires a few additional dependencies:
+In case you prefer `jupyter lab <https://jupyter.org>`_ over jupyter notebooks, you can also install NGLview for jupyter lab. In older versions this requires a few additional dependencies:
 
 .. code-block:: bash
 

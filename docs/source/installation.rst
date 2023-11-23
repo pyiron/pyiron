@@ -6,12 +6,12 @@ Installation
 
 
 Depending on what you want, there are several options to install and configure pyiron as seen blow. If you first want to quickly see how pyiron feels like, use the binder service on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/main?urlpath=lab>`_ (more info in :ref:`mybinder_explenation`), without the need for a local installation.
+For a workstation installation with conda it boils down to :code:`conda install -c conda-forge pyiron`, see :ref:`installation_workstation` for more information and additional packages to be installed.
 
-.. warning:: 
-    The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using Windows we recommend installing the `Windows subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/install-win10>` before you install pyiron and if you are on macOS X we recommend using a  `virtual machine/ virtual box <https://www.virtualbox.org>`_. Native installations on both Windows and macOS X are possible, but functionality is limited. The following instructions assume a linux-like environment. Windows installs will have to go through the Anaconda setup.
 
 .. toctree::
-   :maxdepth:3
+   :maxdepth: 2
+
    installation_workstation
    installation_quickstart
    installation_advanced_config
