@@ -32,7 +32,7 @@ jobs:
     - name: Setup
       shell: bash -l {0}
       run: |
-        pip install --no-deps .
+        pip install . --no-deps --no-build-isolation
     - name: Tests
       shell: bash -l {0}
       run: ./.ci_support/build_notebooks.sh
