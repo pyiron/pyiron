@@ -157,21 +157,19 @@ Install the conda-packaged version of LAMMPS:
     import os
 
     pr = Project("test_lammps")
-    basis = pr.create.structure.bulk('Al', cubic=True)
-    supercell_3x3x3 = basis.repeat([3, 3, 3])
-    job = pr.create_job(job_type=pr.job_type.Lammps, job_name='Al_T800K')
-    job.structure = supercell_3x3x3
-    job.calc_md(temperature=800, pressure=0, n_ionic_steps=10000)
-    pot = job.list_potentials()[0]
-    print ('Selected potential: ', pot)
-    job.potential = pot
-    job.run(delete_existing_job=True)
+    structure = pr.create.structure.bulk('Al', cubic=True).repeat(3)
+    job = pr.create.job.Lammps(job_name='my_job')
+    job.structure = structure
+    job.calc_md()
+    job.run()
+    # The line above issues a warning concerning the potential. You can find more info on the following page:
+    # https://pyiron.readthedocs.io/en/latest/source/notebooks/first_steps.html
 
     print(job['output/generic/energy_tot'])
     print("If a list of numbers is printed above, running calculations on the head node works!")
 
     # Test the queue submission
-    job_new = job.copy_to(new_job_name="test2")
+    job_new = job.copy_to(new_job_name="my_job_2")
     job_new.run(run_mode="queue", delete_existing_job=True)
     os.system("squeue -u abc123") # change abc123 to your username
     print("If a queue table is printed out above, with the correct amount of resources, queue submission works!")
@@ -387,30 +385,25 @@ The entries underneath :code:`queues` should read the same as what you have in t
     import os
 
     pr = Project("test_lammps")
-    job = pr.create_job(job_type=pr.job_type.Lammps, job_name='Al_T800K_remote')
+    job = pr.create.job.Lammps(job_name='my_job_remote')
+    structure = pr.create.structure.bulk('Al', cubic=True).repeat(3)
+    job.structure = structure
+    job.calc_md()
 
-    basis = pr.create.structure.bulk('Al', cubic=True)
-    supercell_3x3x3 = basis.repeat([3, 3, 3])
-    job.structure = supercell_3x3x3
-
-    pot = job.list_potentials()[0]
-    print ('Selected potential: ', pot)
-    job.potential = pot
-
-    job.calc_md(temperature=800, pressure=0, n_ionic_steps=10000)
-
-    job.server.queue = "work"
+    job.server.queue = "work"  # Your queue server name
     job.server.cores = 2
     job.server.memory_limit = 2
 
-    job.run(run_mode="queue", delete_existing_job=True)
+    # The line above issues a warning concerning the potential. You can find more info on the following page:
+    # https://pyiron.readthedocs.io/en/latest/source/notebooks/first_steps.html
+    job.run()
 
 15. Once the job is done on the queue, we can fetch the job back using:
 
 .. code-block:: python
 
     pr = Project("test_lammps")
-    job_name = "Al_T800K_remote"
+    job_name = "my_job_remote"
     pr.wait_for_job(pr.load(job_specifier=job_name))
 
 And then verify that the fetched job has results associated with it:
