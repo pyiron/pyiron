@@ -5,7 +5,7 @@ dependencies:
 - jupyter
 - lammps =*=*_mpi_*
 - nglview
-- ipywidgets <8  # conflict with NGLview
+- ipywidgets
 - papermill
 - seaborn
 - sphinxdft >=2.7.0
