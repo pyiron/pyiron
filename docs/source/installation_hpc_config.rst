@@ -106,9 +106,9 @@ Finally pyiron also supports configuring multiple HPC clusters. In this case rat
 .. code-block:: bash
 
     cluster_primary: cluster_one
-    cluster:
-      cluster_one: cluster_1.yaml
+    cluster: {
+      cluster_one: cluster_1.yaml,
       cluster_two: cluster_2.yaml
-
+    }
 The :code:`cluster_primary` defines the default cluster and the different clusters are each defined in their own :code:`cluster_*.yaml` file. Those :code:`cluster_*.yaml` have the same structure as the :code:`queue.yaml` file discussed above, but they cannot be named :code:`queue.yaml` as pyiron otherwise assumes that only one cluster is available.
 
