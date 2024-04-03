@@ -8,6 +8,12 @@ How to cite pyiron?
 ===================
 To cite pyiron and the corresponding codes, please follow the instructions on the `publication page <citation.html>`_.
 
+How to increase the depth of autocompletion in jupyter notebooks
+================================================================
+You need to add 
+.. code-block::
+  %config IPCompleter.evaluation='unsafe'
+
 What units does pyiron use?
 ===========================
 * mass = atomic mass units
