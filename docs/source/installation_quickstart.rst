@@ -73,7 +73,7 @@ You can figure out the absolute path of your home directory is by calling :code:
     #DISABLE_DATABASE = True
     FILE = ~/pyiron.db
 
-Note the :code:`RESOURCE_PATHS`` contain two entries:
+Note the :code:`RESOURCE_PATHS` contain two entries:
 
 1. :code:`/home/abc123/pyiron_resources`
 
