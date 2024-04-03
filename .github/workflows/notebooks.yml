@@ -19,20 +19,19 @@ jobs:
     - name: Merge Environments
       shell: bash -l {0}
       run: |
-        awk 'NR>3{ print $0 }' .ci_support/environment-notebooks.yml >> .ci_support/environment.yml
+        cp .ci_support/environment.yml environment.yml
+        tail --lines=+4 .ci_support/environment-notebooks.yml >> environment.yml
     - uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: "3.10"
-        mamba-version: "*"
+        python-version: "3.11"
+        miniforge-variant: Mambaforge
         channels: conda-forge
         channel-priority: strict
-        auto-update-conda: true  
-        environment-file: .ci_support/environment.yml
-        miniforge-variant: Mambaforge
+        activate-environment: my-env
+        environment-file: environment.yml
+        use-mamba: true
     - name: Setup
       shell: bash -l {0}
       run: |
-        pip install --no-deps .
-    - name: Tests
-      shell: bash -l {0}
-      run: ./.ci_support/build_notebooks.sh
+        pip install . --no-deps --no-build-isolation
+        ./.ci_support/build_notebooks.sh
