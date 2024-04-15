@@ -23,7 +23,7 @@ jobs:
         tail --lines=+4 .ci_support/environment-notebooks.yml >> environment.yml
     - uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: "3.11"
+        python-version: "3.12"
         miniforge-variant: Mambaforge
         channels: conda-forge
         channel-priority: strict
