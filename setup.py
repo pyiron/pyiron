@@ -15,20 +15,22 @@ setup(
     author_email='janssen@mpie.de',
     license='BSD',
 
-    classifiers=['Development Status :: 5 - Production/Stable',
-                 'Topic :: Scientific/Engineering :: Physics',
-                 'License :: OSI Approved :: BSD License',
-                 'Intended Audience :: Science/Research',
-                 'Operating System :: OS Independent',
-                 'Programming Language :: Python :: 3.9',
-                 'Programming Language :: Python :: 3.10',
-                 'Programming Language :: Python :: 3.11'
-                ],
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Topic :: Scientific/Engineering :: Physics',
+        'License :: OSI Approved :: BSD License',
+        'Intended Audience :: Science/Research',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12'
+    ],
 
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*", "*docs*", "*binder*", "*conda*", "*notebooks*", "*.ci_support*"]),
     install_requires=[
-        'pyiron_atomistics==0.5.2'
+        'pyiron_atomistics==0.5.3'
     ],
     cmdclass=versioneer.get_cmdclass(),
 
