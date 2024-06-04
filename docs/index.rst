@@ -96,6 +96,7 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    source/about.rst
    source/installation.rst
    source/examples.rst
+   Workshops <https://github.com/pyiron-workshop>
    Team <https://pyiron.org/team/>
    Collaborators <https://pyiron.org/collaborators/>
    source/commandline.rst
