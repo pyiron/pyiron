@@ -1,16 +1,16 @@
 channels:
 - conda-forge
 dependencies:
-- gpaw >=20
+- gpaw =24.6.0
 - jupyter
-- lammps =*=*_mpi_*
-- nglview
+- lammps =2024.02.07=*_mpi_*
+- nglview =3.1.2
 - ipywidgets
 - papermill
 - seaborn
-- sphinxdft >=2.7.0
-- sphinxdft-data
+- sphinxdft =3.1
+- sphinxdft-data =0.0.1
 - iprpy-data
-- pyiron-data >=0.0.27
+- pyiron-data =0.0.29
 - pymatgen
-- sqsgenerator
+- sqsgenerator =0.3
