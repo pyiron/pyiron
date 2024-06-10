@@ -34,4 +34,5 @@ jobs:
       shell: bash -l {0}
       run: |
         pip install . --no-deps --no-build-isolation
+        python test.py
         ./.ci_support/build_notebooks.sh
