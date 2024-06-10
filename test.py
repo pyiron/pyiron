@@ -17,6 +17,7 @@ if __name__ == "__main__":
         dft = pr.load(('sample', strain))
         results['volume'].append(dft.structure.get_volume())
         results['energy'].append(dft.output.energy_pot[-1])
+    coeff = np.polyfit(results['volume'], results['energy'], 3)
     equi_volume = np.roots(np.polyder(coeff)).min()
     print('Equilibrium volume:', np.round(equi_volume, decimals=3), 'A^3')
     equi_bulk_mod = np.polyval(np.polyder(coeff, 2), equi_volume) * equi_volume
