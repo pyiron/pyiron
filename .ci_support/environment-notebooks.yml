@@ -3,7 +3,7 @@ channels:
 dependencies:
 - gpaw >=20
 - jupyter
-- lammps =*=*_mpi_*
+- lammps =*=*_openmpi_*
 - nglview
 - ipywidgets
 - papermill
