@@ -15,21 +15,19 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2.2.0
+    - uses: actions/checkout@v4
     - name: Merge Environments
       shell: bash -l {0}
       run: |
         cp .ci_support/environment.yml environment.yml
         tail --lines=+4 .ci_support/environment-notebooks.yml >> environment.yml
-    - uses: conda-incubator/setup-miniconda@v2
+        echo -e "channels:\n  - conda-forge\n" > .condarc
+    - uses: conda-incubator/setup-miniconda@v3
       with:
         python-version: "3.12"
-        miniforge-variant: Mambaforge
-        channels: conda-forge
-        channel-priority: strict
-        activate-environment: my-env
+        miniforge-version: latest
+        condarc-file: .condarc
         environment-file: environment.yml
-        use-mamba: true
     - name: Setup
       shell: bash -l {0}
       run: |
