@@ -10,16 +10,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2.2.0
+    - uses: actions/checkout@v4
+    - name: Conda config
+      run: echo -e "channels:\n  - conda-forge\n" > .condarc
+    - uses: conda-incubator/setup-miniconda@v3
       with:
         python-version: "3.12"
-        mamba-version: "*"
-        channels: conda-forge
-        channel-priority: strict
-        auto-update-conda: true  
+        miniforge-version: latest
+        condarc-file: .condarc
         environment-file: .ci_support/environment.yml
-        miniforge-variant: Mambaforge
     - name: Setup
       shell: bash -l {0}
       run: |
