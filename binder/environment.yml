@@ -5,7 +5,7 @@ dependencies:
 - pyiron
 - pyiron_base =0.11.8
 - pyiron_atomistics =0.7.2
-- lammps
+- lammps =2024.06.27=*_openmpi_*
 - iprpy-data
 - gpaw
 - sphinxdft >=2.7.0
