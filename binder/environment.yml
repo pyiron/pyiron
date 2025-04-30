@@ -3,8 +3,8 @@ channels:
 dependencies:
 - python
 - pyiron
-- pyiron_base =0.11.8
-- pyiron_atomistics =0.7.2
+- pyiron_base =0.11.12
+- pyiron_atomistics =0.7.6
 - lammps =2024.06.27=*_openmpi_*
 - iprpy-data
 - gpaw
