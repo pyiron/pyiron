@@ -3,5 +3,5 @@ channels:
 dependencies:
 - nbsphinx
 - sphinx
-- pyiron_atomistics =0.7.2
+- pyiron_atomistics =0.7.6
 - sphinx-rtd-theme
