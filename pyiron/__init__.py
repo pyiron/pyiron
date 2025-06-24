@@ -15,6 +15,7 @@ create_structure = _StructureFactory().crystal
 import sys
 import pkgutil
 import importlib
+import warnings
 from pyiron_atomistics import \
     atomistics, dft, gpaw, interactive, lammps, sphinx, \
     table, testing, thermodynamics, vasp, project
@@ -35,11 +36,12 @@ from ._version import get_versions
 __version__ = get_versions()["version"]
 del get_versions
 
-_ = [
-    importlib.import_module(name) 
-    for finder, name, ispkg in pkgutil.iter_modules() 
-    if name.startswith('pyiron_') and name not in ['pyiron_base', 'pyiron_atomistics']
-]
+for finder, name, ispkg in pkgutil.iter_modules():
+    if name.startswith('pyiron_') and name not in ['pyiron_base', 'pyiron_atomistics']:
+        try:
+            _ = importlib.import_module(name) 
+        except Exception as err:
+            warnings.warn(f"Err: Failed to import pyiron module {name} due to {err}.")
 
 def install():
     install_dialog()
