@@ -13,4 +13,4 @@ dependencies:
 - iprpy-data
 - pyiron-data >=0.0.27
 - pymatgen
-- sqsgenerator
+- sqsgenerator <0.4
