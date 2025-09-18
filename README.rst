@@ -13,7 +13,7 @@ pyiron
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Release_Date
 
-.. image:: https://github.com/pyiron/pyiron/workflows/Python%20package/badge.svg
+.. image:: https://github.com/pyiron/pyiron/actions/workflows/notebooks.yml/badge.svg
     :target: https://github.com/pyiron//pyiron/actions
     :alt: Build Status
 
