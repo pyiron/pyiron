@@ -5,10 +5,6 @@ pyiron
     :target: https://coveralls.io/github/pyiron/pyiron?branch=main
     :alt: Coverage Status
 
-.. image:: https://api.codacy.com/project/badge/Grade/c513254f10004df5a1f5c76425c6584b
-    :target: https://app.codacy.com/app/pyiron-runner/pyiron?utm_source=github.com&utm_medium=referral&utm_content=pyiron/pyiron&utm_campaign=Badge_Grade_Settings
-    :alt: Codacy Badge
-
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/latest_release_date.svg
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Release_Date
