@@ -7,13 +7,25 @@
 pyiron
 ======
 
-.. image:: https://github.com/pyiron/pyiron/workflows/Python%20package/badge.svg
+.. image:: https://coveralls.io/repos/github/pyiron/pyiron/badge.svg?branch=main
+    :target: https://coveralls.io/github/pyiron/pyiron?branch=main
+    :alt: Coverage Status
+
+.. image:: https://anaconda.org/conda-forge/pyiron/badges/latest_release_date.svg
+    :target: https://anaconda.org/conda-forge/pyiron/
+    :alt: Release_Date
+
+.. image:: https://github.com/pyiron/pyiron/actions/workflows/notebooks.yml/badge.svg
     :target: https://github.com/pyiron//pyiron/actions
     :alt: Build Status
 
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/downloads.svg
+    :target: https://anaconda.org/conda-forge/pyiron/
+    :alt: Downloads
 
-.. image:: https://anaconda.org/conda-forge/pyiron/badges/latest_release_date.svg
+.. image:: https://readthedocs.org/projects/pyiron/badge/?version=latest
+    :target: https://pyiron.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 
 pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common platform:
