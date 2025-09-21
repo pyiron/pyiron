@@ -1,10 +1,6 @@
 pyiron
 ======
 
-.. image:: https://coveralls.io/repos/github/pyiron/pyiron/badge.svg?branch=main
-    :target: https://coveralls.io/github/pyiron/pyiron?branch=main
-    :alt: Coverage Status
-
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/latest_release_date.svg
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Release_Date
