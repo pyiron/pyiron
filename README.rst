@@ -21,6 +21,9 @@ pyiron
     :target: https://pyiron.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://img.shields.io/github/stars/pyiron/pyiron
+    :target: https://github.com/pyiron/pyiron
+    :alt: pyiron repository
 
 .. image:: docs/_static/screenshot.png
     :align: center
