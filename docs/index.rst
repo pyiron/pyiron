@@ -27,6 +27,9 @@ pyiron
     :target: https://pyiron.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image:: https://img.shields.io/github/stars/pyiron/pyiron
+    :target: https://github.com/pyiron/pyiron
+    :alt: pyiron repository
 
 pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common platform:
 
